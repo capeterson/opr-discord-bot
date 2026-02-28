@@ -13,7 +13,8 @@ module.exports = {
     .addSubcommand(sub => sub
       .setName('remove')
       .setDescription('Remove a player from the roster (admin only)')
-      .addUserOption(o => o.setName('player').setDescription('Player to remove').setRequired(true))
+      .addUserOption(o => o.setName('player').setDescription('Discord user to remove').setRequired(false))
+      .addStringOption(o => o.setName('name').setDescription('Name of a guest player (added by name) to remove').setRequired(false))
     ),
 
   async execute(interaction) {
@@ -63,22 +64,77 @@ module.exports = {
 
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-      const target = interaction.options.getUser('player');
+      const target    = interaction.options.getUser('player');
+      const guestName = interaction.options.getString('name');
 
-      const { error } = await supabase
+      if (!target && !guestName) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed('Provide either a Discord `player` or a guest `name` to remove.')],
+        });
+      }
+
+      if (target && guestName) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed('Provide either a Discord `player` or a guest `name`, not both.')],
+        });
+      }
+
+      if (target) {
+        const { error } = await supabase
+          .from('players')
+          .delete()
+          .eq('discord_id', target.id)
+          .eq('guild_id', guildId);
+
+        if (error) {
+          return interaction.editReply({ embeds: [buildErrorEmbed('Failed to remove player.')] });
+        }
+
+        return interaction.editReply({
+          embeds: [buildInfoEmbed(
+            '🗑️ Player Removed',
+            `<@${target.id}> has been removed from the roster.\n\nRun \`/rotation setup\` to rebuild the rotation without them.`,
+            COLORS.warning,
+          )],
+        });
+      }
+
+      // Remove guest player by name
+      const trimmed = guestName.trim();
+
+      const { data: found, error: fetchError } = await supabase
+        .from('players')
+        .select('discord_id, discord_name')
+        .eq('guild_id', guildId)
+        .eq('discord_name', trimmed);
+
+      if (fetchError) {
+        return interaction.editReply({ embeds: [buildErrorEmbed('Failed to look up player.')] });
+      }
+
+      // Guest players have a UUID (non-numeric) as their discord_id
+      const guest = found?.find(p => !/^\d+$/.test(p.discord_id));
+
+      if (!guest) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed(`No guest player named **${trimmed}** found. For Discord users, use the \`player\` option instead.`)],
+        });
+      }
+
+      const { error: deleteError } = await supabase
         .from('players')
         .delete()
-        .eq('discord_id', target.id)
+        .eq('discord_id', guest.discord_id)
         .eq('guild_id', guildId);
 
-      if (error) {
+      if (deleteError) {
         return interaction.editReply({ embeds: [buildErrorEmbed('Failed to remove player.')] });
       }
 
       return interaction.editReply({
         embeds: [buildInfoEmbed(
           '🗑️ Player Removed',
-          `<@${target.id}> has been removed from the roster.\n\nRun \`/rotation setup\` to rebuild the rotation without them.`,
+          `**${guest.discord_name}** has been removed from the roster.\n\nRun \`/rotation setup\` to rebuild the rotation without them.`,
           COLORS.warning,
         )],
       });
