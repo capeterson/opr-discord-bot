@@ -1,3 +1,4 @@
+const { MessageFlags } = require('discord.js');
 const { buildErrorEmbed } = require('../utils/embeds');
 
 /**
@@ -12,7 +13,7 @@ async function handleInteraction(interaction, client) {
   if (!interaction.guildId) {
     return interaction.reply({
       content: 'This bot only works inside a server, not in DMs.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -21,7 +22,7 @@ async function handleInteraction(interaction, client) {
     console.warn(`Unknown command: ${interaction.commandName}`);
     return interaction.reply({
       embeds: [buildErrorEmbed('Unknown command.')],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -33,7 +34,7 @@ async function handleInteraction(interaction, client) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ embeds: [errorEmbed] }).catch(() => {});
     } else {
-      await interaction.reply({ embeds: [errorEmbed], ephemeral: true }).catch(() => {});
+      await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral }).catch(() => {});
     }
   }
 }
