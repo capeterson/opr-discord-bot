@@ -133,5 +133,30 @@ module.exports = {
         )],
       });
     }
+
+    // ── clear ───────────────────────────────────────────────────────────────
+    if (sub === 'clear') {
+      const { error } = await supabase
+        .from('server_config')
+        .update({
+          reminder_channel_id: null,
+          reminder_day: null,
+          reminder_hour: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('guild_id', guildId);
+
+      if (error) {
+        return interaction.editReply({ embeds: [buildErrorEmbed('Failed to clear reminder settings.')] });
+      }
+
+      return interaction.editReply({
+        embeds: [buildInfoEmbed(
+          '✅ Reminder Settings Cleared',
+          'All reminder settings have been removed. Weekly reminders will no longer be sent for this server.',
+          COLORS.success,
+        )],
+      });
+    }
   },
 };

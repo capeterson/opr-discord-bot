@@ -20,6 +20,11 @@ module.exports = {
     .addSubcommand(sub => sub
       .setName('register')
       .setDescription('Register yourself as a player for game tracking and 2v2 rotation')
+      .addUserOption(o => o
+        .setName('user')
+        .setDescription('Admin only: register another Discord member by mention')
+        .setRequired(false)
+      )
       .addStringOption(o => o
         .setName('name')
         .setDescription('Admin only: register a non-Discord player by name')
@@ -171,6 +176,10 @@ module.exports = {
       .addSubcommand(sub => sub
         .setName('view')
         .setDescription('View current bot configuration')
+      )
+      .addSubcommand(sub => sub
+        .setName('clear')
+        .setDescription('Remove all reminder settings for this server (admin only)')
       )
     ),
 
