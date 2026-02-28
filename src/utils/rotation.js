@@ -69,11 +69,16 @@ function totalMatchups(players) {
 }
 
 /**
- * Format a matchup as a readable string using Discord mentions.
+ * Format a matchup as a readable string.
+ * Discord users are shown as mentions; guest players (non-numeric IDs) use nameMap.
+ * @param {string[]} team1Ids
+ * @param {string[]} team2Ids
+ * @param {Object} [nameMap] - Map of guest discord_id -> display name
  */
-function formatMatchup(team1Ids, team2Ids) {
-  const t1 = team1Ids.map(id => `<@${id}>`).join(' & ');
-  const t2 = team2Ids.map(id => `<@${id}>`).join(' & ');
+function formatMatchup(team1Ids, team2Ids, nameMap = {}) {
+  const fmt = id => /^\d+$/.test(id) ? `<@${id}>` : (nameMap[id] || id);
+  const t1 = team1Ids.map(fmt).join(' & ');
+  const t2 = team2Ids.map(fmt).join(' & ');
   return `**Team 1:** ${t1}\n**Team 2:** ${t2}`;
 }
 

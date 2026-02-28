@@ -44,7 +44,8 @@ module.exports = {
       } else {
         const lines = players.map((p, i) => {
           const ts = Math.floor(new Date(p.created_at).getTime() / 1000);
-          return `**${i + 1}.** <@${p.discord_id}> — *Registered <t:${ts}:d>*`;
+          const mention = /^\d+$/.test(p.discord_id) ? `<@${p.discord_id}>` : `**${p.discord_name}**`;
+          return `**${i + 1}.** ${mention} — *Registered <t:${ts}:d>*`;
         });
         embed.setDescription(lines.join('\n'));
       }

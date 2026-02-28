@@ -3,6 +3,23 @@ const supabase = require('../database/supabase');
 const { generateRotations, getCurrentMatchup, getNextMatchup, formatMatchup, totalMatchups } = require('../utils/rotation');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
+/** Build a name map for any guest (non-Discord) player IDs in the list. */
+async function buildGuestNameMap(ids, guildId) {
+  const guestIds = ids.filter(id => !/^\d+$/.test(id));
+  if (guestIds.length === 0) return {};
+  const { data } = await supabase
+    .from('players')
+    .select('discord_id, discord_name')
+    .in('discord_id', guestIds)
+    .eq('guild_id', guildId);
+  return Object.fromEntries((data || []).map(p => [p.discord_id, p.discord_name]));
+}
+
+/** Format a player ID as a mention for Discord users, or bold name for guests. */
+function fmtPlayer(id, nameMap) {
+  return /^\d+$/.test(id) ? `<@${id}>` : `**${nameMap[id] || id}**`;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('rotation')
@@ -64,7 +81,8 @@ module.exports = {
         });
       }
 
-      const ids = players.map(p => p.discord_id);
+      const ids      = players.map(p => p.discord_id);
+      const nameMap  = Object.fromEntries(players.map(p => [p.discord_id, p.discord_name]));
       const rotations = generateRotations(ids);
 
       const { error: upsertErr } = await supabase
@@ -85,9 +103,9 @@ module.exports = {
         .setColor(COLORS.success)
         .setTimestamp()
         .addFields(
-          { name: '👥 Players in rotation', value: players.map(p => `<@${p.discord_id}>`).join(', ') },
+          { name: '👥 Players in rotation', value: players.map(p => fmtPlayer(p.discord_id, nameMap)).join(', ') },
           { name: `🔄 ${rotations.length} unique matchup(s) generated`, value: '\u200B' },
-          { name: '⚔️ First Matchup (Rotation 1)', value: formatMatchup(t1, t2) },
+          { name: '⚔️ First Matchup (Rotation 1)', value: formatMatchup(t1, t2, nameMap) },
         )
         .setFooter({ text: 'Use /rotation view to see all matchups' });
 
@@ -118,6 +136,7 @@ module.exports = {
       }
 
       const ids       = rotState.player_discord_ids;
+      const nameMap   = await buildGuestNameMap(ids, guildId);
       const rotations = generateRotations(ids);
       const total     = rotations.length;
       const current   = rotState.current_index % total;
@@ -127,26 +146,26 @@ module.exports = {
         .setColor(COLORS.info)
         .setTimestamp()
         .addFields(
-          { name: '👥 Registered Players', value: ids.map(id => `<@${id}>`).join(', ') },
+          { name: '👥 Registered Players', value: ids.map(id => fmtPlayer(id, nameMap)).join(', ') },
         );
 
       // Show all matchups, highlighting the current one
       const lines = rotations.map(([t1, t2], i) => {
-        const t1str = t1.map(id => `<@${id}>`).join(' & ');
-        const t2str = t2.map(id => `<@${id}>`).join(' & ');
+        const t1str = t1.map(id => fmtPlayer(id, nameMap)).join(' & ');
+        const t2str = t2.map(id => fmtPlayer(id, nameMap)).join(' & ');
         const arrow = i === current ? ' ← **current**' : '';
         return `**${i + 1}.** ${t1str} vs ${t2str}${arrow}`;
       });
 
       embed.addFields({ name: `🔄 All Matchups (${total} total)`, value: lines.join('\n') });
 
-      // Show next two matchups
+      // Show next matchup
       const next = getNextMatchup(rotState);
       if (next) {
         const [t1, t2] = next;
         embed.addFields({
           name: `⏭️ Next Week's Matchup (Rotation ${((current + 1) % total) + 1})`,
-          value: formatMatchup(t1, t2),
+          value: formatMatchup(t1, t2, nameMap),
         });
       }
 
@@ -185,13 +204,15 @@ module.exports = {
         return interaction.editReply({ embeds: [buildErrorEmbed('Failed to reset rotation.')] });
       }
 
-      const rotations = generateRotations(rotState.player_discord_ids);
+      const ids      = rotState.player_discord_ids;
+      const nameMap  = await buildGuestNameMap(ids, guildId);
+      const rotations = generateRotations(ids);
       const [t1, t2]  = rotations[0];
 
       return interaction.editReply({
         embeds: [buildInfoEmbed(
           '🔄 Rotation Reset',
-          `Rotation has been reset to matchup 1 of ${rotations.length}.\n\n${formatMatchup(t1, t2)}`,
+          `Rotation has been reset to matchup 1 of ${rotations.length}.\n\n${formatMatchup(t1, t2, nameMap)}`,
           COLORS.warning,
         )],
       });
