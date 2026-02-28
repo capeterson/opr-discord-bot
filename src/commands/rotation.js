@@ -22,7 +22,7 @@ function fmtPlayer(id, nameMap) {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('rotation')
+    .setName('opr-rotation')
     .setDescription('Manage the 2v2 team rotation')
     .addSubcommand(sub => sub
       .setName('setup')
@@ -107,7 +107,7 @@ module.exports = {
           { name: `🔄 ${rotations.length} unique matchup(s) generated`, value: '\u200B' },
           { name: '⚔️ First Matchup (Rotation 1)', value: formatMatchup(t1, t2, nameMap) },
         )
-        .setFooter({ text: 'Use /rotation view to see all matchups' });
+        .setFooter({ text: 'Use /opr-rotation view to see all matchups' });
 
       return interaction.editReply({ embeds: [embed] });
     }
@@ -130,7 +130,7 @@ module.exports = {
         return interaction.editReply({
           embeds: [buildInfoEmbed(
             '⚔️ No Rotation Set Up',
-            'No 2v2 rotation is configured yet.\nAn admin can run `/rotation setup` after all players have `/register`\'d.',
+            'No 2v2 rotation is configured yet.\nAn admin can run `/opr-rotation setup` after all players have `/opr-register`\'d.',
           )],
         });
       }
@@ -192,7 +192,7 @@ module.exports = {
         .maybeSingle();
 
       if (fetchErr || !rotState) {
-        return interaction.editReply({ embeds: [buildErrorEmbed('No rotation found. Run `/rotation setup` first.')] });
+        return interaction.editReply({ embeds: [buildErrorEmbed('No rotation found. Run `/opr-rotation setup` first.')] });
       }
 
       const { error: updateErr } = await supabase

@@ -4,7 +4,7 @@ const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('players')
+    .setName('opr-players')
     .setDescription('Manage the registered player roster')
     .addSubcommand(sub => sub
       .setName('list')
@@ -38,10 +38,10 @@ module.exports = {
         .setTitle('🎮 Registered Players')
         .setColor(COLORS.info)
         .setTimestamp()
-        .setFooter({ text: `${players?.length || 0} player(s) registered · /register to join` });
+        .setFooter({ text: `${players?.length || 0} player(s) registered · /opr-register to join` });
 
       if (!players || players.length === 0) {
-        embed.setDescription('No players registered yet.\nUse `/register` to join the roster!');
+        embed.setDescription('No players registered yet.\nUse `/opr-register` to join the roster!');
       } else {
         const lines = players.map((p, i) => {
           const ts = Math.floor(new Date(p.created_at).getTime() / 1000);
@@ -93,7 +93,7 @@ module.exports = {
         return interaction.editReply({
           embeds: [buildInfoEmbed(
             '🗑️ Player Removed',
-            `<@${target.id}> has been removed from the roster.\n\nRun \`/rotation setup\` to rebuild the rotation without them.`,
+            `<@${target.id}> has been removed from the roster.\n\nRun \`/opr-rotation setup\` to rebuild the rotation without them.`,
             COLORS.warning,
           )],
         });
@@ -134,7 +134,7 @@ module.exports = {
       return interaction.editReply({
         embeds: [buildInfoEmbed(
           '🗑️ Player Removed',
-          `**${guest.discord_name}** has been removed from the roster.\n\nRun \`/rotation setup\` to rebuild the rotation without them.`,
+          `**${guest.discord_name}** has been removed from the roster.\n\nRun \`/opr-rotation setup\` to rebuild the rotation without them.`,
           COLORS.warning,
         )],
       });

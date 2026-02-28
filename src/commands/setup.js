@@ -6,7 +6,7 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('setup')
+    .setName('opr-setup')
     .setDescription('Configure bot settings for this server (admin only)')
     .addSubcommand(sub => sub
       .setName('channel')
@@ -67,7 +67,7 @@ module.exports = {
         .setTimestamp();
 
       if (!config) {
-        embed.setDescription('No configuration found. Use `/setup channel`, `/setup day`, and `/setup time` to configure the bot.');
+        embed.setDescription('No configuration found. Use `/opr-setup channel`, `/opr-setup day`, and `/opr-setup time` to configure the bot.');
       } else {
         embed.addFields(
           {

@@ -17,23 +17,23 @@ A Discord bot for tracking [One Page Rules](https://onepagerules.com/) game resu
   - [Running the Bot](#running-the-bot)
   - [First-Time Server Setup](#first-time-server-setup)
 - [Commands — Players](#commands--players)
-  - [/register](#register)
-  - [/report](#report)
-  - [/stats](#stats)
-  - [/schedule view](#schedule-view)
-  - [/players list](#players-list)
-  - [/rotation view](#rotation-view)
-  - [/setup view](#setup-view)
+  - [/opr-register](#opr-register)
+  - [/opr-report](#opr-report)
+  - [/opr-stats](#opr-stats)
+  - [/opr-schedule view](#opr-schedule-view)
+  - [/opr-players list](#opr-players-list)
+  - [/opr-rotation view](#opr-rotation-view)
+  - [/opr-setup view](#opr-setup-view)
 - [Commands — Guild Admins](#commands--guild-admins)
-  - [/setup channel](#setup-channel)
-  - [/setup day](#setup-day)
-  - [/setup time](#setup-time)
-  - [/schedule set](#schedule-set)
-  - [/schedule clear](#schedule-clear)
-  - [/players remove](#players-remove)
-  - [/rotation setup](#rotation-setup)
-  - [/rotation reset](#rotation-reset)
-  - [/register (guest)](#register-guest)
+  - [/opr-setup channel](#opr-setup-channel)
+  - [/opr-setup day](#opr-setup-day)
+  - [/opr-setup time](#opr-setup-time)
+  - [/opr-schedule set](#opr-schedule-set)
+  - [/opr-schedule clear](#opr-schedule-clear)
+  - [/opr-players remove](#opr-players-remove)
+  - [/opr-rotation setup](#opr-rotation-setup)
+  - [/opr-rotation reset](#opr-rotation-reset)
+  - [/opr-register (guest)](#opr-register-guest)
 - [Weekly Reminders](#weekly-reminders)
 - [2v2 Rotation System](#2v2-rotation-system)
 - [Permissions Reference](#permissions-reference)
@@ -129,32 +129,32 @@ Once the bot is in your server and running, follow these steps as a server admin
 
 1. **Configure a reminder channel:**
    ```
-   /setup channel channel:#your-channel
+   /opr-setup channel channel:#your-channel
    ```
 
 2. **Set the reminder day:**
    ```
-   /setup day day:Monday
+   /opr-setup day day:Monday
    ```
 
 3. **Set the reminder time (UTC):**
    ```
-   /setup time hour:18
+   /opr-setup time hour:18
    ```
 
 4. **Have all players register themselves:**
    ```
-   /register
+   /opr-register
    ```
 
 5. **Build the 2v2 rotation** (requires 4+ registered players, even number):
    ```
-   /rotation setup
+   /opr-rotation setup
    ```
 
 6. **Schedule your first game:**
    ```
-   /schedule set date:2025-06-01 time:14:00 type:2v2 note:Pizza provided!
+   /opr-schedule set date:2025-06-01 time:14:00 type:2v2 note:Pizza provided!
    ```
 
 ---
@@ -165,12 +165,12 @@ These commands are available to all server members.
 
 ---
 
-### /register
+### /opr-register
 
 Register yourself as a player for game tracking and 2v2 rotation.
 
 ```
-/register
+/opr-register
 ```
 
 **Parameters:** None (for self-registration)
@@ -185,16 +185,16 @@ Register yourself as a player for game tracking and 2v2 rotation.
 
 ---
 
-### /report
+### /opr-report
 
 Report the result of a One Page Rules game.
 
-#### /report 1v1
+#### /opr-report 1v1
 
 Report a one-versus-one game result.
 
 ```
-/report 1v1 system:<system> points:<points> winner:<@user> winner_faction:<faction> loser:<@user> loser_faction:<faction>
+/opr-report 1v1 system:<system> points:<points> winner:<@user> winner_faction:<faction> loser:<@user> loser_faction:<faction>
 ```
 
 | Parameter | Type | Required | Description |
@@ -208,15 +208,15 @@ Report a one-versus-one game result.
 
 **Example:**
 ```
-/report 1v1 system:Grimdark Future points:1000 winner:@Alice winner_faction:Alien Hives loser:@Bob loser_faction:Humans
+/opr-report 1v1 system:Grimdark Future points:1000 winner:@Alice winner_faction:Alien Hives loser:@Bob loser_faction:Humans
 ```
 
-#### /report 2v2
+#### /opr-report 2v2
 
 Report a two-versus-two co-op game result. Automatically advances the 2v2 rotation to the next matchup.
 
 ```
-/report 2v2 system:<system> points:<points> winner1:<@user> winner1_faction:<faction> winner2:<@user> winner2_faction:<faction> loser1:<@user> loser1_faction:<faction> loser2:<@user> loser2_faction:<faction>
+/opr-report 2v2 system:<system> points:<points> winner1:<@user> winner1_faction:<faction> winner2:<@user> winner2_faction:<faction> loser1:<@user> loser1_faction:<faction> loser2:<@user> loser2_faction:<faction>
 ```
 
 | Parameter | Type | Required | Description |
@@ -234,19 +234,19 @@ Report a two-versus-two co-op game result. Automatically advances the 2v2 rotati
 
 **Example:**
 ```
-/report 2v2 system:Age of Fantasy points:2000 winner1:@Alice winner1_faction:Elves winner2:@Bob winner2_faction:Dwarves loser1:@Carol loser1_faction:Orcs loser2:@Dave loser2_faction:Undead
+/opr-report 2v2 system:Age of Fantasy points:2000 winner1:@Alice winner1_faction:Elves winner2:@Bob winner2_faction:Dwarves loser1:@Carol loser1_faction:Orcs loser2:@Dave loser2_faction:Undead
 ```
 
 **After reporting a 2v2 game**, the bot will confirm the result and display the next scheduled matchup from the rotation.
 
 ---
 
-### /stats
+### /opr-stats
 
 View game statistics and leaderboards for this server.
 
 ```
-/stats [filter:<system>]
+/opr-stats [filter:<system>]
 ```
 
 | Parameter | Type | Required | Description |
@@ -263,18 +263,18 @@ View game statistics and leaderboards for this server.
 
 **Example:**
 ```
-/stats
-/stats filter:Grimdark Future
+/opr-stats
+/opr-stats filter:Grimdark Future
 ```
 
 ---
 
-### /schedule view
+### /opr-schedule view
 
 View upcoming scheduled game sessions.
 
 ```
-/schedule view
+/opr-schedule view
 ```
 
 **Parameters:** None
@@ -287,12 +287,12 @@ View upcoming scheduled game sessions.
 
 ---
 
-### /players list
+### /opr-players list
 
 View all registered players on the server roster.
 
 ```
-/players list
+/opr-players list
 ```
 
 **Parameters:** None
@@ -301,12 +301,12 @@ View all registered players on the server roster.
 
 ---
 
-### /rotation view
+### /opr-rotation view
 
 View the 2v2 team rotation — all matchups, the current one, and what's coming next.
 
 ```
-/rotation view
+/opr-rotation view
 ```
 
 **Parameters:** None
@@ -320,12 +320,12 @@ The rotation advances automatically each time a 2v2 game is reported.
 
 ---
 
-### /setup view
+### /opr-setup view
 
 View the current bot configuration for this server.
 
 ```
-/setup view
+/opr-setup view
 ```
 
 **Parameters:** None
@@ -344,12 +344,12 @@ These commands require the **Manage Server** permission.
 
 ---
 
-### /setup channel
+### /opr-setup channel
 
 Set the Discord channel where weekly game reminders will be posted.
 
 ```
-/setup channel channel:<#channel>
+/opr-setup channel channel:<#channel>
 ```
 
 | Parameter | Type | Required | Description |
@@ -358,17 +358,17 @@ Set the Discord channel where weekly game reminders will be posted.
 
 **Example:**
 ```
-/setup channel channel:#opr-gaming
+/opr-setup channel channel:#opr-gaming
 ```
 
 ---
 
-### /setup day
+### /opr-setup day
 
 Set the day of the week for weekly reminders.
 
 ```
-/setup day day:<day>
+/opr-setup day day:<day>
 ```
 
 | Parameter | Type | Required | Description |
@@ -377,17 +377,17 @@ Set the day of the week for weekly reminders.
 
 **Example:**
 ```
-/setup day day:Friday
+/opr-setup day day:Friday
 ```
 
 ---
 
-### /setup time
+### /opr-setup time
 
 Set the UTC hour at which weekly reminders are sent.
 
 ```
-/setup time hour:<0-23>
+/opr-setup time hour:<0-23>
 ```
 
 | Parameter | Type | Required | Description |
@@ -396,19 +396,19 @@ Set the UTC hour at which weekly reminders are sent.
 
 **Example:**
 ```
-/setup time hour:18
+/opr-setup time hour:18
 ```
 
 This sets reminders to go out at 18:00 UTC (6:00 PM UTC). Adjust for your local time zone accordingly.
 
 ---
 
-### /schedule set
+### /opr-schedule set
 
 Schedule an upcoming game session.
 
 ```
-/schedule set date:<YYYY-MM-DD> time:<HH:MM> type:<1v1|2v2> [note:<text>]
+/opr-schedule set date:<YYYY-MM-DD> time:<HH:MM> type:<1v1|2v2> [note:<text>]
 ```
 
 | Parameter | Type | Required | Description |
@@ -422,38 +422,38 @@ Schedule an upcoming game session.
 
 **Example:**
 ```
-/schedule set date:2025-07-04 time:19:00 type:2v2 note:Bring pizza!
+/opr-schedule set date:2025-07-04 time:19:00 type:2v2 note:Bring pizza!
 ```
 
 ---
 
-### /schedule clear
+### /opr-schedule clear
 
 Remove a scheduled game from the list.
 
 ```
-/schedule clear number:<n>
+/opr-schedule clear number:<n>
 ```
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `number` | Integer (≥1) | Yes | The game number shown in `/schedule view` |
+| `number` | Integer (≥1) | Yes | The game number shown in `/opr-schedule view` |
 
-Run `/schedule view` first to see the number of the game you want to remove.
+Run `/opr-schedule view` first to see the number of the game you want to remove.
 
 **Example:**
 ```
-/schedule clear number:2
+/opr-schedule clear number:2
 ```
 
 ---
 
-### /players remove
+### /opr-players remove
 
 Remove a player from the server roster. Use either `player` or `name`, not both.
 
 ```
-/players remove [player:<@user>] [name:<guest name>]
+/opr-players remove [player:<@user>] [name:<guest name>]
 ```
 
 | Parameter | Type | Required | Description |
@@ -464,22 +464,22 @@ Remove a player from the server roster. Use either `player` or `name`, not both.
 **Examples:**
 ```
 # Remove a Discord user
-/players remove player:@Alice
+/opr-players remove player:@Alice
 
 # Remove a guest (non-Discord) player
-/players remove name:GuestPlayer
+/opr-players remove name:GuestPlayer
 ```
 
 > **Note:** Removing a player does not delete their historical game records. It only removes them from the active roster and future rotation.
 
 ---
 
-### /rotation setup
+### /opr-rotation setup
 
 Build the 2v2 rotation from all currently registered players.
 
 ```
-/rotation setup
+/opr-rotation setup
 ```
 
 **Parameters:** None
@@ -500,18 +500,18 @@ Matchup 2: A & C  vs  B & D
 Matchup 3: A & D  vs  B & C
 ```
 
-After all matchups are played, run `/rotation reset` to cycle back to the beginning.
+After all matchups are played, run `/opr-rotation reset` to cycle back to the beginning.
 
-> **Tip:** Run `/rotation setup` again any time the player roster changes (someone joins or leaves).
+> **Tip:** Run `/opr-rotation setup` again any time the player roster changes (someone joins or leaves).
 
 ---
 
-### /rotation reset
+### /opr-rotation reset
 
 Reset the 2v2 rotation back to the first matchup.
 
 ```
-/rotation reset
+/opr-rotation reset
 ```
 
 **Parameters:** None
@@ -520,12 +520,12 @@ Use this after all matchups in the current rotation have been played, or any tim
 
 ---
 
-### /register (guest)
+### /opr-register (guest)
 
 Register a non-Discord (guest) player by name. Useful for in-person players who don't have Discord.
 
 ```
-/register name:<guest name>
+/opr-register name:<guest name>
 ```
 
 | Parameter | Type | Required | Description |
@@ -534,10 +534,10 @@ Register a non-Discord (guest) player by name. Useful for in-person players who 
 
 **Example:**
 ```
-/register name:Uncle Terry
+/opr-register name:Uncle Terry
 ```
 
-Guest players can participate in games and the 2v2 rotation just like Discord users. To remove a guest, use `/players remove name:<guest name>`.
+Guest players can participate in games and the 2v2 rotation just like Discord users. To remove a guest, use `/opr-players remove name:<guest name>`.
 
 ---
 
@@ -556,9 +556,9 @@ When configured, the bot sends an automated weekly reminder to a designated chan
 4. Reminders are only sent once per day, even if the bot restarts
 
 **Setup checklist:**
-- [ ] `/setup channel` — Set the reminder channel
-- [ ] `/setup day` — Set the reminder day
-- [ ] `/setup time` — Set the reminder hour (UTC)
+- [ ] `/opr-setup channel` — Set the reminder channel
+- [ ] `/opr-setup day` — Set the reminder day
+- [ ] `/opr-setup time` — Set the reminder hour (UTC)
 
 ---
 
@@ -580,10 +580,10 @@ The bot generates C(5, 2) = 10 unique matchups:
 > **Note:** With more than 4 players, the bot pairs everyone into 2-player teams and generates all unique team vs. team combinations. All registered players participate.
 
 **Rotation lifecycle:**
-1. Admin runs `/rotation setup` → rotation is built from current roster
-2. Each time `/report 2v2` is used → rotation advances one step
-3. After all matchups are played → admin runs `/rotation reset` to restart
-4. If the roster changes → admin runs `/rotation setup` again to regenerate
+1. Admin runs `/opr-rotation setup` → rotation is built from current roster
+2. Each time `/opr-report 2v2` is used → rotation advances one step
+3. After all matchups are played → admin runs `/opr-rotation reset` to restart
+4. If the roster changes → admin runs `/opr-rotation setup` again to regenerate
 
 ---
 
@@ -591,23 +591,23 @@ The bot generates C(5, 2) = 10 unique matchups:
 
 | Command | Who Can Use |
 |---------|-------------|
-| `/register` (self) | Everyone |
-| `/register name:` (guest) | Admins (Manage Server) |
-| `/report 1v1` | Everyone |
-| `/report 2v2` | Everyone |
-| `/stats` | Everyone |
-| `/schedule view` | Everyone |
-| `/schedule set` | Admins (Manage Server) |
-| `/schedule clear` | Admins (Manage Server) |
-| `/players list` | Everyone |
-| `/players remove` | Admins (Manage Server) |
-| `/rotation view` | Everyone |
-| `/rotation setup` | Admins (Manage Server) |
-| `/rotation reset` | Admins (Manage Server) |
-| `/setup view` | Everyone |
-| `/setup channel` | Admins (Manage Server) |
-| `/setup day` | Admins (Manage Server) |
-| `/setup time` | Admins (Manage Server) |
+| `/opr-register` (self) | Everyone |
+| `/opr-register name:` (guest) | Admins (Manage Server) |
+| `/opr-report 1v1` | Everyone |
+| `/opr-report 2v2` | Everyone |
+| `/opr-stats` | Everyone |
+| `/opr-schedule view` | Everyone |
+| `/opr-schedule set` | Admins (Manage Server) |
+| `/opr-schedule clear` | Admins (Manage Server) |
+| `/opr-players list` | Everyone |
+| `/opr-players remove` | Admins (Manage Server) |
+| `/opr-rotation view` | Everyone |
+| `/opr-rotation setup` | Admins (Manage Server) |
+| `/opr-rotation reset` | Admins (Manage Server) |
+| `/opr-setup view` | Everyone |
+| `/opr-setup channel` | Admins (Manage Server) |
+| `/opr-setup day` | Admins (Manage Server) |
+| `/opr-setup time` | Admins (Manage Server) |
 
 ---
 
@@ -624,11 +624,11 @@ The bot generates C(5, 2) = 10 unique matchups:
 **"Missing required environment variable" on startup**
 - Ensure your `.env` file exists and all four required variables are set correctly.
 
-**`/rotation setup` fails**
-- You need at least 4 registered players and the count must be even. Use `/players list` to check the current roster, then have players use `/register` or use `/register name:` for guests.
+**`/opr-rotation setup` fails**
+- You need at least 4 registered players and the count must be even. Use `/opr-players list` to check the current roster, then have players use `/opr-register` or use `/opr-register name:` for guests.
 
 **Weekly reminders aren't being sent**
-- Confirm all three setup values are configured: `/setup view` should show a channel, day, and time.
+- Confirm all three setup values are configured: `/opr-setup view` should show a channel, day, and time.
 - The bot checks once per hour at :00. Reminders will go out at the next matching UTC hour.
 - Ensure the bot has permission to send messages in the configured channel.
 

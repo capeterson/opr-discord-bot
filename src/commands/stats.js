@@ -4,7 +4,7 @@ const { buildStatsEmbed, buildErrorEmbed } = require('../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('stats')
+    .setName('opr-stats')
     .setDescription('View One Page Rules game statistics for this server')
     .addStringOption(o => o
       .setName('filter')

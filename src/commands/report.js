@@ -7,7 +7,7 @@ const SYSTEMS = Object.keys(GAME_SYSTEMS).map(name => ({ name, value: name }));
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('report')
+    .setName('opr-report')
     .setDescription('Report the result of a One Page Rules game')
     // ── 1v1 ──────────────────────────────────────────────────────────────
     .addSubcommand(sub => sub
