@@ -1,24 +1,7 @@
-const { SlashCommandBuilder } = require('discord.js');
 const supabase = require('../database/supabase');
 const { buildStatsEmbed, buildErrorEmbed } = require('../utils/embeds');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('stats')
-    .setDescription('View One Page Rules game statistics for this server')
-    .addStringOption(o => o
-      .setName('filter')
-      .setDescription('Filter by game system')
-      .setRequired(false)
-      .addChoices(
-        { name: 'All systems',                   value: 'all' },
-        { name: 'Age of Fantasy',                value: 'Age of Fantasy' },
-        { name: 'Grimdark Future',               value: 'Grimdark Future' },
-        { name: 'Age of Fantasy: Skirmish',      value: 'Age of Fantasy: Skirmish' },
-        { name: 'Grimdark Future: Firefight',    value: 'Grimdark Future: Firefight' },
-      )
-    ),
-
   async execute(interaction) {
     const guildId = interaction.guildId;
     const filter  = interaction.options.getString('filter') || 'all';

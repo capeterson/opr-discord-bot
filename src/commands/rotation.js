@@ -1,6 +1,6 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
+const { PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
-const { generateRotations, getCurrentMatchup, getNextMatchup, formatMatchup, totalMatchups } = require('../utils/rotation');
+const { generateRotations, getCurrentMatchup, getNextMatchup, formatMatchup } = require('../utils/rotation');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
 /** Build a name map for any guest (non-Discord) player IDs in the list. */
@@ -21,22 +21,6 @@ function fmtPlayer(id, nameMap) {
 }
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('rotation')
-    .setDescription('Manage the 2v2 team rotation')
-    .addSubcommand(sub => sub
-      .setName('setup')
-      .setDescription('Build the rotation from all registered players (admin only)')
-    )
-    .addSubcommand(sub => sub
-      .setName('view')
-      .setDescription('Show the current and upcoming team matchups')
-    )
-    .addSubcommand(sub => sub
-      .setName('reset')
-      .setDescription('Reset the rotation back to the first matchup (admin only)')
-    ),
-
   async execute(interaction) {
     const sub     = interaction.options.getSubcommand();
     const guildId = interaction.guildId;

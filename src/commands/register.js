@@ -1,18 +1,9 @@
-const { SlashCommandBuilder, MessageFlags, PermissionFlagsBits } = require('discord.js');
+const { MessageFlags, PermissionFlagsBits } = require('discord.js');
 const { randomUUID } = require('crypto');
 const supabase = require('../database/supabase');
 const { buildInfoEmbed, buildErrorEmbed, COLORS } = require('../utils/embeds');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('register')
-    .setDescription('Register yourself as a player for game tracking and 2v2 rotation')
-    .addStringOption(o => o
-      .setName('name')
-      .setDescription('Admin only: register a non-Discord player by name')
-      .setRequired(false)
-    ),
-
   async execute(interaction) {
     const guildId   = interaction.guildId;
     const guestName = interaction.options.getString('name');

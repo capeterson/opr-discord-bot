@@ -1,41 +1,7 @@
-const { SlashCommandBuilder } = require('discord.js');
 const supabase = require('../database/supabase');
-const { buildReportEmbed, buildErrorEmbed, GAME_SYSTEMS } = require('../utils/embeds');
-const { getNextMatchup } = require('../utils/rotation');
-
-const SYSTEMS = Object.keys(GAME_SYSTEMS).map(name => ({ name, value: name }));
+const { buildReportEmbed, buildErrorEmbed } = require('../utils/embeds');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('report')
-    .setDescription('Report the result of a One Page Rules game')
-    // ── 1v1 ──────────────────────────────────────────────────────────────
-    .addSubcommand(sub => sub
-      .setName('1v1')
-      .setDescription('Report a 1v1 game result')
-      .addStringOption(o => o.setName('system').setDescription('Game system').setRequired(true).addChoices(...SYSTEMS))
-      .addIntegerOption(o => o.setName('points').setDescription('Army points per player').setRequired(true).setMinValue(1))
-      .addUserOption(o => o.setName('winner').setDescription('The winning player').setRequired(true))
-      .addStringOption(o => o.setName('winner_faction').setDescription('Winning player\'s faction').setRequired(true))
-      .addUserOption(o => o.setName('loser').setDescription('The losing player').setRequired(true))
-      .addStringOption(o => o.setName('loser_faction').setDescription('Losing player\'s faction').setRequired(true))
-    )
-    // ── 2v2 ──────────────────────────────────────────────────────────────
-    .addSubcommand(sub => sub
-      .setName('2v2')
-      .setDescription('Report a 2v2 co-op game result')
-      .addStringOption(o => o.setName('system').setDescription('Game system').setRequired(true).addChoices(...SYSTEMS))
-      .addIntegerOption(o => o.setName('points').setDescription('Army points per player').setRequired(true).setMinValue(1))
-      .addUserOption(o => o.setName('winner1').setDescription('Winning team — player 1').setRequired(true))
-      .addStringOption(o => o.setName('winner1_faction').setDescription('Winner 1\'s faction').setRequired(true))
-      .addUserOption(o => o.setName('winner2').setDescription('Winning team — player 2').setRequired(true))
-      .addStringOption(o => o.setName('winner2_faction').setDescription('Winner 2\'s faction').setRequired(true))
-      .addUserOption(o => o.setName('loser1').setDescription('Losing team — player 1').setRequired(true))
-      .addStringOption(o => o.setName('loser1_faction').setDescription('Loser 1\'s faction').setRequired(true))
-      .addUserOption(o => o.setName('loser2').setDescription('Losing team — player 2').setRequired(true))
-      .addStringOption(o => o.setName('loser2_faction').setDescription('Loser 2\'s faction').setRequired(true))
-    ),
-
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand();
     const guildId    = interaction.guildId;

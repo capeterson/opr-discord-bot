@@ -1,22 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
+const { PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('players')
-    .setDescription('Manage the registered player roster')
-    .addSubcommand(sub => sub
-      .setName('list')
-      .setDescription('List all registered players')
-    )
-    .addSubcommand(sub => sub
-      .setName('remove')
-      .setDescription('Remove a player from the roster (admin only)')
-      .addUserOption(o => o.setName('player').setDescription('Discord user to remove').setRequired(false))
-      .addStringOption(o => o.setName('name').setDescription('Name of a guest player (added by name) to remove').setRequired(false))
-    ),
-
   async execute(interaction) {
     const sub     = interaction.options.getSubcommand();
     const guildId = interaction.guildId;

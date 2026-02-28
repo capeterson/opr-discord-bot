@@ -1,36 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
+const { PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
 const { buildErrorEmbed, buildInfoEmbed, COLORS, formatDate, formatRelative } = require('../utils/embeds');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('schedule')
-    .setDescription('Manage the upcoming game schedule')
-    .addSubcommand(sub => sub
-      .setName('set')
-      .setDescription('Schedule a game (admin only)')
-      .addStringOption(o => o.setName('date').setDescription('Date in YYYY-MM-DD format (UTC)').setRequired(true))
-      .addStringOption(o => o.setName('time').setDescription('Time in HH:MM format (UTC), e.g. 14:00').setRequired(true))
-      .addStringOption(o => o
-        .setName('type')
-        .setDescription('Game format')
-        .setRequired(true)
-        .addChoices(
-          { name: '1v1', value: '1v1' },
-          { name: '2v2', value: '2v2' },
-        ))
-      .addStringOption(o => o.setName('note').setDescription('Optional note (location, bring snacks, etc.)').setRequired(false))
-    )
-    .addSubcommand(sub => sub
-      .setName('view')
-      .setDescription('View upcoming scheduled games')
-    )
-    .addSubcommand(sub => sub
-      .setName('clear')
-      .setDescription('Remove a scheduled game by its number in the list (admin only)')
-      .addIntegerOption(o => o.setName('number').setDescription('Game number from /schedule view').setRequired(true).setMinValue(1))
-    ),
-
   async execute(interaction) {
     const sub     = interaction.options.getSubcommand();
     const guildId = interaction.guildId;

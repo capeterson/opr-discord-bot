@@ -1,45 +1,10 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
+const { PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('setup')
-    .setDescription('Configure bot settings for this server (admin only)')
-    .addSubcommand(sub => sub
-      .setName('channel')
-      .setDescription('Set the channel for weekly reminders')
-      .addChannelOption(o => o.setName('channel').setDescription('The channel to post weekly reminders in').setRequired(true))
-    )
-    .addSubcommand(sub => sub
-      .setName('day')
-      .setDescription('Set the day of week for weekly reminders')
-      .addStringOption(o => o
-        .setName('day')
-        .setDescription('Day of week')
-        .setRequired(true)
-        .addChoices(
-          { name: 'Sunday',    value: '0' },
-          { name: 'Monday',    value: '1' },
-          { name: 'Tuesday',   value: '2' },
-          { name: 'Wednesday', value: '3' },
-          { name: 'Thursday',  value: '4' },
-          { name: 'Friday',    value: '5' },
-          { name: 'Saturday',  value: '6' },
-        ))
-    )
-    .addSubcommand(sub => sub
-      .setName('time')
-      .setDescription('Set the UTC hour for weekly reminders (0–23)')
-      .addIntegerOption(o => o.setName('hour').setDescription('Hour in UTC (0–23)').setRequired(true).setMinValue(0).setMaxValue(23))
-    )
-    .addSubcommand(sub => sub
-      .setName('view')
-      .setDescription('View current bot configuration')
-    ),
-
   async execute(interaction) {
     const sub     = interaction.options.getSubcommand();
     const guildId = interaction.guildId;
