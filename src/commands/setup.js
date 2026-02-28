@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
@@ -44,16 +44,16 @@ module.exports = {
     const sub     = interaction.options.getSubcommand();
     const guildId = interaction.guildId;
 
-    if (sub !== 'view' && !interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+    if (sub !== 'view' && !interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
       return interaction.reply({
         embeds: [buildErrorEmbed('You need the **Manage Server** permission to change bot settings.')],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     // ── view ───────────────────────────────────────────────────────────────
     if (sub === 'view') {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const { data: config } = await supabase
         .from('server_config')
@@ -96,7 +96,7 @@ module.exports = {
       return interaction.editReply({ embeds: [embed] });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     // Ensure row exists
     await supabase

@@ -1,5 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
 const { buildErrorEmbed, buildInfoEmbed, COLORS, formatDate, formatRelative } = require('../utils/embeds');
 
@@ -37,11 +36,11 @@ module.exports = {
     const guildId = interaction.guildId;
 
     if (sub === 'set') {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-        return interaction.reply({ embeds: [buildErrorEmbed('You need the **Manage Server** permission to schedule games.')], ephemeral: true });
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
+        return interaction.reply({ embeds: [buildErrorEmbed('You need the **Manage Server** permission to schedule games.')], flags: MessageFlags.Ephemeral });
       }
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const dateStr = interaction.options.getString('date');
       const timeStr = interaction.options.getString('time');
@@ -111,11 +110,11 @@ module.exports = {
     }
 
     if (sub === 'clear') {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-        return interaction.reply({ embeds: [buildErrorEmbed('You need the **Manage Server** permission to clear scheduled games.')], ephemeral: true });
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
+        return interaction.reply({ embeds: [buildErrorEmbed('You need the **Manage Server** permission to clear scheduled games.')], flags: MessageFlags.Ephemeral });
       }
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const number = interaction.options.getInteger('number');
 

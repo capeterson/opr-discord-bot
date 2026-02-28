@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
@@ -53,14 +53,14 @@ module.exports = {
     }
 
     if (sub === 'remove') {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
         return interaction.reply({
           embeds: [buildErrorEmbed('You need the **Manage Server** permission to remove players.')],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const target = interaction.options.getUser('player');
 

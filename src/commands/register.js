@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
 const { buildInfoEmbed, buildErrorEmbed, COLORS } = require('../utils/embeds');
 
@@ -12,7 +12,7 @@ module.exports = {
     const discordName = interaction.user.displayName || interaction.user.username;
     const guildId     = interaction.guildId;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const { data: existing, error: fetchErr } = await supabase
       .from('players')

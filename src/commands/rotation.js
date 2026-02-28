@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
 const { generateRotations, getCurrentMatchup, getNextMatchup, formatMatchup, totalMatchups } = require('../utils/rotation');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
@@ -26,14 +26,14 @@ module.exports = {
 
     // ── setup ──────────────────────────────────────────────────────────────
     if (sub === 'setup') {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
         return interaction.reply({
           embeds: [buildErrorEmbed('You need the **Manage Server** permission to set up the rotation.')],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const { data: players, error } = await supabase
         .from('players')
@@ -157,14 +157,14 @@ module.exports = {
 
     // ── reset ──────────────────────────────────────────────────────────────
     if (sub === 'reset') {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
         return interaction.reply({
           embeds: [buildErrorEmbed('You need the **Manage Server** permission to reset the rotation.')],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const { data: rotState, error: fetchErr } = await supabase
         .from('rotation_state')
