@@ -22,7 +22,7 @@ function fmtPlayer(id, nameMap) {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('opr-rotation')
+    .setName('rotation')
     .setDescription('Manage the 2v2 team rotation')
     .addSubcommand(sub => sub
       .setName('setup')

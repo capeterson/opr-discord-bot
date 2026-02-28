@@ -5,7 +5,7 @@ const { buildInfoEmbed, buildErrorEmbed, COLORS } = require('../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('opr-register')
+    .setName('register')
     .setDescription('Register yourself as a player for game tracking and 2v2 rotation')
     .addStringOption(o => o
       .setName('name')

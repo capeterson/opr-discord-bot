@@ -4,7 +4,7 @@ const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('opr-players')
+    .setName('players')
     .setDescription('Manage the registered player roster')
     .addSubcommand(sub => sub
       .setName('list')

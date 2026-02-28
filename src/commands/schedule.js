@@ -4,7 +4,7 @@ const { buildErrorEmbed, buildInfoEmbed, COLORS, formatDate, formatRelative } = 
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('opr-schedule')
+    .setName('schedule')
     .setDescription('Manage the upcoming game schedule')
     .addSubcommand(sub => sub
       .setName('set')

@@ -6,7 +6,7 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('opr-setup')
+    .setName('setup')
     .setDescription('Configure bot settings for this server (admin only)')
     .addSubcommand(sub => sub
       .setName('channel')
