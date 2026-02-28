@@ -96,14 +96,14 @@ module.exports = {
         .setTimestamp();
 
       if (!events || events.length === 0) {
-        embed.setDescription('No upcoming games scheduled.\nUse `/opr-schedule set` to add one!');
+        embed.setDescription('No upcoming games scheduled.\nUse `/opr schedule set` to add one!');
       } else {
         const lines = events.map((e, i) => {
           const note = e.note ? ` — ${e.note}` : '';
           return `**${i + 1}.** ${formatDate(e.game_date)} · **${e.game_type}**${note}\n└ ${formatRelative(e.game_date)}`;
         });
         embed.setDescription(lines.join('\n\n'));
-        embed.setFooter({ text: 'Remove entries with /opr-schedule clear <number>' });
+        embed.setFooter({ text: 'Remove entries with /opr schedule clear <number>' });
       }
 
       return interaction.editReply({ embeds: [embed] });
@@ -132,7 +132,7 @@ module.exports = {
 
       const target = events[number - 1];
       if (!target) {
-        return interaction.editReply({ embeds: [buildErrorEmbed(`No scheduled game at position ${number}. Use \`/opr-schedule view\` to see the list.`)] });
+        return interaction.editReply({ embeds: [buildErrorEmbed(`No scheduled game at position ${number}. Use \`/opr schedule view\` to see the list.`)] });
       }
 
       const { error: delErr } = await supabase.from('game_schedule').delete().eq('id', target.id);

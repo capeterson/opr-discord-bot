@@ -57,7 +57,7 @@ module.exports = {
       return interaction.editReply({
         embeds: [buildInfoEmbed(
           '✅ Player Added',
-          `**${trimmed}** has been added to the player roster.\n\nRun \`/opr-rotation setup\` to rebuild the 2v2 rotation.`,
+          `**${trimmed}** has been added to the player roster.\n\nRun \`/opr rotation setup\` to rebuild the 2v2 rotation.`,
           COLORS.success,
         )],
       });
@@ -106,7 +106,7 @@ module.exports = {
     return interaction.editReply({
       embeds: [buildInfoEmbed(
         '✅ Registered!',
-        `Welcome, **${discordName}**! You've been added to the player roster.\n\nUse \`/opr-rotation setup\` (admin) to rebuild the 2v2 rotation with all registered players.`,
+        `Welcome, **${discordName}**! You've been added to the player roster.\n\nUse \`/opr rotation setup\` (admin) to rebuild the 2v2 rotation with all registered players.`,
         COLORS.success,
       )],
     });

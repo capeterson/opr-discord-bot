@@ -67,7 +67,7 @@ module.exports = {
         .setTimestamp();
 
       if (!config) {
-        embed.setDescription('No configuration found. Use `/opr-setup channel`, `/opr-setup day`, and `/opr-setup time` to configure the bot.');
+        embed.setDescription('No configuration found. Use `/opr setup channel`, `/opr setup day`, and `/opr setup time` to configure the bot.');
       } else {
         embed.addFields(
           {
