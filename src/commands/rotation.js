@@ -1,6 +1,6 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
+const { PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
-const { generateRotations, getCurrentMatchup, getNextMatchup, formatMatchup, totalMatchups } = require('../utils/rotation');
+const { generateRotations, getCurrentMatchup, getNextMatchup, formatMatchup } = require('../utils/rotation');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
 /** Build a name map for any guest (non-Discord) player IDs in the list. */
@@ -21,22 +21,6 @@ function fmtPlayer(id, nameMap) {
 }
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('rotation')
-    .setDescription('Manage the 2v2 team rotation')
-    .addSubcommand(sub => sub
-      .setName('setup')
-      .setDescription('Build the rotation from all registered players (admin only)')
-    )
-    .addSubcommand(sub => sub
-      .setName('view')
-      .setDescription('Show the current and upcoming team matchups')
-    )
-    .addSubcommand(sub => sub
-      .setName('reset')
-      .setDescription('Reset the rotation back to the first matchup (admin only)')
-    ),
-
   async execute(interaction) {
     const sub     = interaction.options.getSubcommand();
     const guildId = interaction.guildId;
@@ -67,7 +51,7 @@ module.exports = {
           embeds: [buildErrorEmbed(
             `You need at least **4 registered players** for 2v2 rotation.\n` +
             `Currently registered: **${players.length}**\n` +
-            `Have remaining players use \`/register\` first.`,
+            `Have remaining players use \`/opr register\` first.`,
           )],
         });
       }
@@ -107,7 +91,7 @@ module.exports = {
           { name: `🔄 ${rotations.length} unique matchup(s) generated`, value: '\u200B' },
           { name: '⚔️ First Matchup (Rotation 1)', value: formatMatchup(t1, t2, nameMap) },
         )
-        .setFooter({ text: 'Use /rotation view to see all matchups' });
+        .setFooter({ text: 'Use /opr rotation view to see all matchups' });
 
       return interaction.editReply({ embeds: [embed] });
     }
@@ -130,7 +114,7 @@ module.exports = {
         return interaction.editReply({
           embeds: [buildInfoEmbed(
             '⚔️ No Rotation Set Up',
-            'No 2v2 rotation is configured yet.\nAn admin can run `/rotation setup` after all players have `/register`\'d.',
+            'No 2v2 rotation is configured yet.\nAn admin can run `/opr rotation setup` after all players have `/opr register`\'d.',
           )],
         });
       }
@@ -192,7 +176,7 @@ module.exports = {
         .maybeSingle();
 
       if (fetchErr || !rotState) {
-        return interaction.editReply({ embeds: [buildErrorEmbed('No rotation found. Run `/rotation setup` first.')] });
+        return interaction.editReply({ embeds: [buildErrorEmbed('No rotation found. Run `/opr rotation setup` first.')] });
       }
 
       const { error: updateErr } = await supabase

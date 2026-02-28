@@ -1,13 +1,7 @@
-const register = require('./register');
-const report   = require('./report');
-const schedule = require('./schedule');
-const stats    = require('./stats');
-const players  = require('./players');
-const rotation = require('./rotation');
-const setup    = require('./setup');
+const opr = require('./opr');
 
 /** All commands exported as an array for easy iteration. */
-const commands = [register, report, schedule, stats, players, rotation, setup];
+const commands = [opr];
 
 /**
  * Load all commands into the Discord client's command Collection.

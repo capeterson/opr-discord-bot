@@ -1,18 +1,9 @@
-const { SlashCommandBuilder, MessageFlags, PermissionFlagsBits } = require('discord.js');
+const { MessageFlags, PermissionFlagsBits } = require('discord.js');
 const { randomUUID } = require('crypto');
 const supabase = require('../database/supabase');
 const { buildInfoEmbed, buildErrorEmbed, COLORS } = require('../utils/embeds');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('register')
-    .setDescription('Register yourself as a player for game tracking and 2v2 rotation')
-    .addStringOption(o => o
-      .setName('name')
-      .setDescription('Admin only: register a non-Discord player by name')
-      .setRequired(false)
-    ),
-
   async execute(interaction) {
     const guildId   = interaction.guildId;
     const guestName = interaction.options.getString('name');
@@ -57,7 +48,7 @@ module.exports = {
       return interaction.editReply({
         embeds: [buildInfoEmbed(
           '✅ Player Added',
-          `**${trimmed}** has been added to the player roster.\n\nRun \`/rotation setup\` to rebuild the 2v2 rotation.`,
+          `**${trimmed}** has been added to the player roster.\n\nRun \`/opr rotation setup\` to rebuild the 2v2 rotation.`,
           COLORS.success,
         )],
       });
@@ -106,7 +97,7 @@ module.exports = {
     return interaction.editReply({
       embeds: [buildInfoEmbed(
         '✅ Registered!',
-        `Welcome, **${discordName}**! You've been added to the player roster.\n\nUse \`/rotation setup\` (admin) to rebuild the 2v2 rotation with all registered players.`,
+        `Welcome, **${discordName}**! You've been added to the player roster.\n\nUse \`/opr rotation setup\` (admin) to rebuild the 2v2 rotation with all registered players.`,
         COLORS.success,
       )],
     });
