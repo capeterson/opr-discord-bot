@@ -194,57 +194,38 @@ Register yourself as a player for game tracking and 2v2 rotation.
 
 ### /opr report
 
-Report the result of a One Page Rules game.
-
-#### /opr report 1v1
-
-Report a one-versus-one game result.
+Report the result of a One Page Rules game using an interactive form.
 
 ```
-/opr report 1v1 system:<system> points:<points> winner:<@user> winner_faction:<faction> loser:<@user> loser_faction:<faction>
+/opr report
 ```
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `system` | Choice | Yes | Game system (see [Supported Game Systems](#supported-game-systems)) |
-| `points` | Integer (≥1) | Yes | Army points per player |
-| `winner` | User mention | Yes | The player who won |
-| `winner_faction` | Text | Yes | The winning player's army faction |
-| `loser` | User mention | Yes | The player who lost |
-| `loser_faction` | Text | Yes | The losing player's army faction |
+**Parameters:** None — the command opens an interactive form.
 
-**Example:**
-```
-/opr report 1v1 system:Grimdark Future points:1000 winner:@Alice winner_faction:Alien Hives loser:@Bob loser_faction:Humans
-```
+**Form steps:**
 
-#### /opr report 2v2
+1. **Setup** — Select game type (1v1 or 2v2) and game system. The form updates automatically once both are chosen.
 
-Report a two-versus-two co-op game result. Automatically advances the 2v2 rotation to the next matchup.
+2. **1v1 players & factions** — Select winner, loser, and a faction for each player from a dropdown list. Click **Set Army Points** to enter the point size via a small pop-up. Once all fields are filled, click **Submit Report**.
 
-```
-/opr report 2v2 system:<system> points:<points> winner1:<@user> winner1_faction:<faction> winner2:<@user> winner2_faction:<faction> loser1:<@user> loser1_faction:<faction> loser2:<@user> loser2_faction:<faction>
-```
+3. **2v2 teams & winner** — The current rotation matchup is pre-filled. Select which team won (or "Tie"), then click **Next: Select Factions**. Use **Override Teams** to select different players instead of the rotation matchup.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `system` | Choice | Yes | Game system |
-| `points` | Integer (≥1) | Yes | Army points per player |
-| `winner1` | User mention | Yes | Winning team — player 1 |
-| `winner1_faction` | Text | Yes | Winner 1's army faction |
-| `winner2` | User mention | Yes | Winning team — player 2 |
-| `winner2_faction` | Text | Yes | Winner 2's army faction |
-| `loser1` | User mention | Yes | Losing team — player 1 |
-| `loser1_faction` | Text | Yes | Loser 1's army faction |
-| `loser2` | User mention | Yes | Losing team — player 2 |
-| `loser2_faction` | Text | Yes | Loser 2's army faction |
+4. **2v2 factions** — Select a faction for each of the four players, then click **Submit Report**.
 
-**Example:**
-```
-/opr report 2v2 system:Age of Fantasy points:2000 winner1:@Alice winner1_faction:Elves winner2:@Bob winner2_faction:Dwarves loser1:@Carol loser1_faction:Orcs loser2:@Dave loser2_faction:Undead
-```
+After the report is saved, a public result embed is posted to the channel with two buttons:
 
-**After reporting a 2v2 game**, the bot will confirm the result and display the next scheduled matchup from the rotation.
+- **📝 Add My Details** — Each participant can add their army list name, an [Army Forge](https://army-forge.onepagerules.com/) share URL, personal notes, and how they felt about the game. Faction can also be set here.
+- **🔧 Edit Report** — Admins (Manage Server) can correct any field in the report.
+
+**Faction options** are shown as dropdown menus:
+- Age of Fantasy / AoF Skirmish: Amazon Sisterhood, Ancestral Dwarves, Beastmen Ambushers, Custodian Brotherhood, Dark Elven Raiders, Disciples of Plague, Dwarven Guilds, Eternal Dynasty, Eternal Void, Goblin Pillagers, Halfling Militia, High Elf Kingdoms, Kingdom of Men, Orc Marauders, Ratmen Clans, Sylvan Elves, Undead Legions, Vampire Covens, Other
+- Grimdark Future / GDF Firefight: Battle Brothers, Battle Sisters, Alien Hives, TAO Colony, Robot Legions, Havoc Brothers, Infected, Orc Marauders, Elven Jesters, Sector Rangers, Machine Cult, Dino Warriors, Jackals, Titan Legions, Custodian Brothers, Gene Warriors, Dwarf Guilds, Ratmen Clans, Imperial Guard, Squat Clans, Chaos Daemons, Other
+
+**Notes:**
+- The form is ephemeral (only visible to you). The result is posted publicly when you submit.
+- Forms expire after 30 minutes of inactivity.
+- Up to 25 registered players are shown in player select menus.
+- Guest players (registered by name) appear with a "(guest)" label in the dropdowns.
 
 ---
 
@@ -711,8 +692,7 @@ The bot generates C(5, 2) = 10 unique matchups:
 | `/opr register` (self) | Everyone |
 | `/opr register name:` (guest) | Admins (Manage Server) |
 | `/opr register user:` (Discord user) | Admins (Manage Server) |
-| `/opr report 1v1` | Everyone |
-| `/opr report 2v2` | Everyone |
+| `/opr report` | Everyone |
 | `/opr stats` | Everyone |
 | `/opr schedule view` | Everyone |
 | `/opr schedule set` | Admins (Manage Server) |
@@ -755,4 +735,4 @@ The bot generates C(5, 2) = 10 unique matchups:
 - Ensure the bot has permission to send messages in the configured channel.
 
 **A player reported a game for the wrong users / with the wrong faction**
-- Contact your server admin. There is no undo command; incorrect records must be removed directly from the database.
+- Server admins can click the **🔧 Edit Report** button on the original result embed to correct any game details, including players, factions, and army points.

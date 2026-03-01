@@ -40,14 +40,18 @@ src/
 │   ├── index.js              # Exports loadCommands(); imports all command files
 │   ├── opr.js                # SlashCommandBuilder for the entire /opr tree
 │   ├── register.js           # /opr register logic
-│   ├── report.js             # /opr report 1v1 and 2v2 logic
+│   ├── report.js             # /opr report — launches interactive form (ephemeral)
 │   ├── stats.js              # /opr stats logic
 │   ├── players.js            # /opr players list/remove logic
 │   ├── schedule.js           # /opr schedule set/view/clear logic
 │   ├── rotation.js           # /opr rotation setup/view/reset/skip/preview/reorder logic
 │   └── setup.js              # /opr setup channel/day/time/view/clear logic
+├── components/
+│   ├── reportSession.js      # In-memory form sessions; createSession/getSession/updateSession/deleteSession
+│   ├── reportFormBuilder.js  # Builds each form step's embeds+components; faction lists; modals
+│   └── reportComponentHandler.js # Routes all rpt:/report: buttons, selects, and modals
 ├── handlers/
-│   └── interactionHandler.js # Routes interactions to command handlers; top-level error handling
+│   └── interactionHandler.js # Routes slash commands, buttons, selects, and modals
 ├── database/
 │   └── supabase.js           # Supabase client singleton
 ├── utils/
@@ -70,9 +74,7 @@ All commands live under `/opr`. The full tree:
 /opr
 ├── register                         # Self-register; or admin registers user/guest
 ├── stats [system]                   # Leaderboard, faction stats, matchup records
-├── report
-│   ├── 1v1  <system> <points> <winner> <winner_faction> <loser> <loser_faction>
-│   └── 2v2  <system> <points> <w1> <w1f> <w2> <w2f> <l1> <l1f> <l2> <l2f>
+├── report                           # Opens interactive form (1v1 or 2v2, select menus + modal)
 ├── schedule
 │   ├── set   <date> <time> <type> [note]   # Admin
 │   ├── view                                # Everyone
@@ -104,8 +106,8 @@ Admin commands require the "Manage Server" Discord permission.
 | Table | Key Columns | Purpose |
 |-------|-------------|---------|
 | `players` | `discord_id`, `guild_id`, `discord_name` | Registered players (Discord + guests) |
-| `games` | `guild_id`, `game_date`, `game_system`, `game_type`, `army_points` | Game records |
-| `game_participants` | `game_id`, `discord_id`, `discord_name`, `team`, `faction`, `won` | Per-player game participation |
+| `games` | `guild_id`, `game_date`, `game_system`, `game_type`, `army_points`, `is_tie` | Game records |
+| `game_participants` | `game_id`, `discord_id`, `discord_name`, `team`, `faction` (nullable), `won`, `army_name`, `army_forge_url`, `player_notes`, `game_feeling` | Per-player game participation |
 | `game_schedule` | `guild_id`, `game_date`, `game_type`, `note` | Upcoming scheduled games |
 | `server_config` | `guild_id`, `reminder_channel_id`, `reminder_day`, `reminder_hour`, `last_reminder_date` | Per-guild bot settings |
 | `rotation_state` | `guild_id`, `player_discord_ids[]`, `current_index`, `matchup_order[]` | 2v2 rotation state |
@@ -133,6 +135,7 @@ Discord users are displayed as `<@discord_id>` mentions; guests as bold names.
 - **Embeds:** All user-facing responses are Discord embeds built in `src/utils/embeds.js`. Use `buildErrorEmbed()` for errors and `buildInfoEmbed()` for neutral messages.
 - **Error handling:** Command handlers `try/catch` and return ephemeral error embeds. Uncaught errors are caught in `interactionHandler.js`.
 - **Ephemerals:** Error replies are ephemeral (only the invoking user sees them). Success replies are visible to the channel.
+- **Report form:** `/opr report` opens an ephemeral multi-step form using Discord components (select menus, buttons, modals). State is tracked in-memory via `src/components/reportSession.js` keyed by a session ID embedded in component custom_ids (`rpt:<action>:<sid>`). Persistent post-game buttons use `report:<action>:<gameId>` custom_ids and survive bot restarts. Custom_ids for form interactions use `rpt:` prefix; post-game buttons use `report:` prefix.
 - **2v2 rotation algorithm:** Fixes the first player on Team 1 and enumerates all C(n-1, n/2-1) partner combinations — guarantees no duplicate matchups. Logic is in `src/utils/rotation.js`. A custom `matchup_order` integer array (stored in `rotation_state`) can override the natural order; `getOrderedMatchups()` applies it.
 - **Weekly reminder:** `weeklyReminder.js` runs a cron job at the top of every hour, checks `server_config` for matching day/hour, skips if `last_reminder_date` == today, then sends a stats summary embed.
 
@@ -147,7 +150,7 @@ Discord users are displayed as `<@discord_id>` mentions; guests as bold names.
 | Age of Fantasy: Skirmish | AoF Skirmish |
 | Grimdark Future: Firefight | GF Firefight |
 
-System choices are hardcoded as `addChoices()` in `src/commands/opr.js`.
+System choices are offered as `StringSelectMenuBuilder` options in `src/components/reportFormBuilder.js` and in `src/commands/opr.js` (for the `stats` filter).
 
 ---
 

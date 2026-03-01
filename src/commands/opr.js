@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { GAME_SYSTEMS } = require('../utils/embeds');
 
 const register = require('./register');
 const report   = require('./report');
@@ -8,8 +7,6 @@ const schedule = require('./schedule');
 const players  = require('./players');
 const rotation = require('./rotation');
 const setup    = require('./setup');
-
-const SYSTEMS = Object.keys(GAME_SYSTEMS).map(name => ({ name, value: name }));
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -49,33 +46,9 @@ module.exports = {
     )
 
     // ── report ──────────────────────────────────────────────────────────────
-    .addSubcommandGroup(group => group
+    .addSubcommand(sub => sub
       .setName('report')
-      .setDescription('Report the result of a One Page Rules game')
-      .addSubcommand(sub => sub
-        .setName('1v1')
-        .setDescription('Report a 1v1 game result')
-        .addStringOption(o => o.setName('system').setDescription('Game system').setRequired(true).addChoices(...SYSTEMS))
-        .addIntegerOption(o => o.setName('points').setDescription('Army points per player').setRequired(true).setMinValue(1))
-        .addUserOption(o => o.setName('winner').setDescription('The winning player').setRequired(true))
-        .addStringOption(o => o.setName('winner_faction').setDescription("Winning player's faction").setRequired(true))
-        .addUserOption(o => o.setName('loser').setDescription('The losing player').setRequired(true))
-        .addStringOption(o => o.setName('loser_faction').setDescription("Losing player's faction").setRequired(true))
-      )
-      .addSubcommand(sub => sub
-        .setName('2v2')
-        .setDescription('Report a 2v2 co-op game result')
-        .addStringOption(o => o.setName('system').setDescription('Game system').setRequired(true).addChoices(...SYSTEMS))
-        .addIntegerOption(o => o.setName('points').setDescription('Army points per player').setRequired(true).setMinValue(1))
-        .addUserOption(o => o.setName('winner1').setDescription('Winning team — player 1').setRequired(true))
-        .addStringOption(o => o.setName('winner1_faction').setDescription("Winner 1's faction").setRequired(true))
-        .addUserOption(o => o.setName('winner2').setDescription('Winning team — player 2').setRequired(true))
-        .addStringOption(o => o.setName('winner2_faction').setDescription("Winner 2's faction").setRequired(true))
-        .addUserOption(o => o.setName('loser1').setDescription('Losing team — player 1').setRequired(true))
-        .addStringOption(o => o.setName('loser1_faction').setDescription("Loser 1's faction").setRequired(true))
-        .addUserOption(o => o.setName('loser2').setDescription('Losing team — player 2').setRequired(true))
-        .addStringOption(o => o.setName('loser2_faction').setDescription("Loser 2's faction").setRequired(true))
-      )
+      .setDescription('Report the result of a One Page Rules game using the interactive form')
     )
 
     // ── schedule ────────────────────────────────────────────────────────────
@@ -212,7 +185,7 @@ module.exports = {
     const group = interaction.options.getSubcommandGroup(false);
     const sub   = interaction.options.getSubcommand();
 
-    if (group === 'report')   return report.execute(interaction);
+    if (sub === 'report')     return report.execute(interaction);
     if (group === 'schedule') return schedule.execute(interaction);
     if (group === 'players')  return players.execute(interaction);
     if (group === 'rotation') return rotation.execute(interaction);
