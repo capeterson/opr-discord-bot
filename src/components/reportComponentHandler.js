@@ -11,10 +11,6 @@ const {
   getSession,
   updateSession,
   deleteSession,
-  createDetailSession,
-  getDetailSession,
-  updateDetailSession,
-  deleteDetailSession,
 } = require('./reportSession');
 
 const {
@@ -23,7 +19,6 @@ const {
   build2v2TeamsStep,
   build2v2OverrideStep,
   build2v2FactionStep,
-  buildAddDetailsMessage,
   buildPointsModal,
   buildSubmitModal,
   buildAddDetailsModal,
@@ -484,15 +479,6 @@ async function handlePostGameComponent(interaction) {
   if (action === 'edit') {
     return handleEditReportButton(interaction, parts[2]);
   }
-  if (action === 'fac') {
-    return handleDetailFacSelect(interaction, parts[2], parts[3]);
-  }
-  if (action === 'feel') {
-    return handleDetailFeelSelect(interaction, parts[2], parts[3]);
-  }
-  if (action === 'save') {
-    return handleSaveDetails(interaction, parts[2], parts[3]);
-  }
 }
 
 async function handleAddDetailsButton(interaction, gameId) {
@@ -516,7 +502,6 @@ async function handleAddDetailsButton(interaction, gameId) {
 }
 
 async function handleDetailsModal(interaction, gameId, userId) {
-  // Verify participant
   const { data: participant } = await supabase
     .from('game_participants')
     .select('id')
@@ -531,59 +516,26 @@ async function handleDetailsModal(interaction, gameId, userId) {
     });
   }
 
-  const { data: game } = await supabase
-    .from('games')
-    .select('game_system')
-    .eq('id', gameId)
-    .single();
-
-  const armyName    = interaction.fields.getTextInputValue('army_name').trim()      || null;
+  const armyName     = interaction.fields.getTextInputValue('army_name').trim()      || null;
   const armyForgeUrl = interaction.fields.getTextInputValue('army_forge_url').trim() || null;
   const playerNotes  = interaction.fields.getTextInputValue('player_notes').trim()   || null;
+  const faction      = interaction.fields.getTextInputValue('faction').trim()        || null;
+  const rawFeeling   = interaction.fields.getTextInputValue('game_feeling').trim().toLowerCase() || null;
+  const gameFeeling  = rawFeeling && VALID_FEELING_VALUES.has(rawFeeling) ? rawFeeling : null;
 
-  createDetailSession(gameId, userId, game?.game_system || '', armyName, armyForgeUrl, playerNotes);
+  const updateData = {};
+  if (armyName)     updateData.army_name      = armyName;
+  if (armyForgeUrl) updateData.army_forge_url  = armyForgeUrl;
+  if (playerNotes)  updateData.player_notes    = playerNotes;
+  if (faction)      updateData.faction         = faction;
+  if (gameFeeling)  updateData.game_feeling    = gameFeeling;
 
-  const msg = buildAddDetailsMessage(gameId, userId, game?.game_system || '');
-  return interaction.reply({ ...msg, flags: MessageFlags.Ephemeral });
-}
-
-async function handleDetailFacSelect(interaction, gameId, userId) {
-  if (interaction.user.id !== userId) {
-    return interaction.reply({ content: '⚠️ These details belong to another player.', flags: MessageFlags.Ephemeral });
-  }
-  updateDetailSession(gameId, userId, { faction: interaction.values[0] });
-  return interaction.deferUpdate();
-}
-
-async function handleDetailFeelSelect(interaction, gameId, userId) {
-  if (interaction.user.id !== userId) {
-    return interaction.reply({ content: '⚠️ These details belong to another player.', flags: MessageFlags.Ephemeral });
-  }
-  updateDetailSession(gameId, userId, { feeling: interaction.values[0] });
-  return interaction.deferUpdate();
-}
-
-async function handleSaveDetails(interaction, gameId, userId) {
-  if (interaction.user.id !== userId) {
-    return interaction.reply({ content: '⚠️ These details belong to another player.', flags: MessageFlags.Ephemeral });
-  }
-
-  const ds = getDetailSession(gameId, userId);
-  if (!ds) {
+  if (Object.keys(updateData).length === 0) {
     return interaction.reply({
-      content: '⏱️ Session expired. Click **Add My Details** again.',
+      content: '⚠️ No details were provided — fill in at least one field.',
       flags: MessageFlags.Ephemeral,
     });
   }
-
-  await interaction.deferUpdate();
-
-  const updateData = {};
-  if (ds.armyName)     updateData.army_name      = ds.armyName;
-  if (ds.armyForgeUrl) updateData.army_forge_url  = ds.armyForgeUrl;
-  if (ds.playerNotes)  updateData.player_notes    = ds.playerNotes;
-  if (ds.faction)      updateData.faction         = ds.faction;
-  if (ds.feeling)      updateData.game_feeling     = ds.feeling;
 
   const { error } = await supabase
     .from('game_participants')
@@ -593,11 +545,13 @@ async function handleSaveDetails(interaction, gameId, userId) {
 
   if (error) {
     console.error('Failed to save player details:', error);
-    return interaction.editReply({ content: '❌ Failed to save details. Please try again.', embeds: [], components: [] });
+    return interaction.reply({
+      content: '❌ Failed to save details. Please try again.',
+      flags: MessageFlags.Ephemeral,
+    });
   }
 
-  deleteDetailSession(gameId, userId);
-  return interaction.editReply({ content: '✅ Details saved!', embeds: [], components: [] });
+  return interaction.reply({ content: '✅ Details saved!', flags: MessageFlags.Ephemeral });
 }
 
 async function handleEditReportButton(interaction, gameId) {

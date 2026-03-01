@@ -453,41 +453,6 @@ function build2v2FactionStep(state, sid) {
   return { embeds: [embed], components: rows };
 }
 
-// ── Post-game helpers ─────────────────────────────────────────────────────────
-
-/**
- * "Add My Details" step 2: faction select + feeling select + save button.
- * Shown as an ephemeral reply after the text-field modal is submitted.
- */
-function buildAddDetailsMessage(gameId, userId, gameSystem) {
-  const factionOptions = factionsToOptions(getFactions(gameSystem));
-
-  const facSelect = new StringSelectMenuBuilder()
-    .setCustomId(`report:fac:${gameId}:${userId}`)
-    .setPlaceholder('Select your faction…')
-    .addOptions(factionOptions);
-
-  const feelSelect = new StringSelectMenuBuilder()
-    .setCustomId(`report:feel:${gameId}:${userId}`)
-    .setPlaceholder('How was the game for you?')
-    .addOptions(GAME_FEELINGS);
-
-  const saveBtn = new ButtonBuilder()
-    .setCustomId(`report:save:${gameId}:${userId}`)
-    .setLabel('Save Details')
-    .setStyle(ButtonStyle.Primary);
-
-  return {
-    content:    'Select your faction and how you felt about the game, then save.',
-    embeds:     [],
-    components: [
-      new ActionRowBuilder().addComponents(facSelect),
-      new ActionRowBuilder().addComponents(feelSelect),
-      new ActionRowBuilder().addComponents(saveBtn),
-    ],
-  };
-}
-
 // ── Modal builders ────────────────────────────────────────────────────────────
 
 /** Modal for entering army points. */
@@ -558,7 +523,7 @@ function buildSubmitModal(sid) {
   return modal;
 }
 
-/** Modal for adding post-game army details. */
+/** Modal for adding post-game army details (all fields in one step). */
 function buildAddDetailsModal(gameId, userId) {
   const modal = new ModalBuilder()
     .setCustomId(`report:dtl_mdl:${gameId}:${userId}`)
@@ -586,10 +551,28 @@ function buildAddDetailsModal(gameId, userId) {
     .setRequired(false)
     .setMaxLength(1000);
 
+  const factionInput = new TextInputBuilder()
+    .setCustomId('faction')
+    .setLabel('Your faction (optional)')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false)
+    .setMaxLength(100)
+    .setPlaceholder('e.g. Battle Brothers, Kingdom of Men…');
+
+  const feelingInput = new TextInputBuilder()
+    .setCustomId('game_feeling')
+    .setLabel('How was the game for you? (optional)')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false)
+    .setMaxLength(50)
+    .setPlaceholder('amazing / fun / ok / frustrating / lucky / intense');
+
   modal.addComponents(
     new ActionRowBuilder().addComponents(armyNameInput),
     new ActionRowBuilder().addComponents(urlInput),
     new ActionRowBuilder().addComponents(notesInput),
+    new ActionRowBuilder().addComponents(factionInput),
+    new ActionRowBuilder().addComponents(feelingInput),
   );
 
   return modal;
@@ -601,12 +584,10 @@ module.exports = {
   build2v2TeamsStep,
   build2v2OverrideStep,
   build2v2FactionStep,
-  buildAddDetailsMessage,
   buildPointsModal,
   buildSubmitModal,
   buildAddDetailsModal,
   getFactions,
-  GAME_FEELINGS,
   FACTIONS_AOF,
   FACTIONS_GDF,
   is1v1Ready,
