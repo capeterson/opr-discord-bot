@@ -161,4 +161,6 @@ System choices are offered as `StringSelectMenuBuilder` options in `src/componen
 3. Route the new subcommand in `src/handlers/interactionHandler.js`.
 4. **Update `README.md`** with usage docs for the new command.
 5. **Update `CLAUDE.md`** — add the command to the command tree above and any relevant sections.
-6. Run `npm run deploy` to register the updated command schema with Discord.
+
+## Relevant Documentation
+- Consider the Discord Components v2 documentation https://docs.discord.com/developers/components/overview and discordjs guide on components: https://discordjs.guide/legacy/popular-topics/display-components
