@@ -136,6 +136,20 @@ module.exports = {
 
     // ── clear ───────────────────────────────────────────────────────────────
     if (sub === 'clear') {
+      const channel = interaction.options.getChannel('channel');
+
+      const { data: config } = await supabase
+        .from('server_config')
+        .select('reminder_channel_id')
+        .eq('guild_id', guildId)
+        .maybeSingle();
+
+      if (!config || config.reminder_channel_id !== channel.id) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed(`Reminders are not configured for <#${channel.id}>. Use \`/opr setup view\` to see the current reminder channel.`)],
+        });
+      }
+
       const { error } = await supabase
         .from('server_config')
         .update({
@@ -153,7 +167,7 @@ module.exports = {
       return interaction.editReply({
         embeds: [buildInfoEmbed(
           '✅ Reminder Settings Cleared',
-          'All reminder settings have been removed. Weekly reminders will no longer be sent for this server.',
+          `Reminders for <#${channel.id}> have been removed. Weekly reminders will no longer be sent for this server.`,
           COLORS.success,
         )],
       });

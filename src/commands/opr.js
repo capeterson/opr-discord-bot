@@ -179,7 +179,8 @@ module.exports = {
       )
       .addSubcommand(sub => sub
         .setName('clear')
-        .setDescription('Remove all reminder settings for this server (admin only)')
+        .setDescription('Remove reminder settings for a specific channel (admin only)')
+        .addChannelOption(o => o.setName('channel').setDescription('The channel to remove reminders for').setRequired(true))
       )
     ),
 
