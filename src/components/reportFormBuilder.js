@@ -509,6 +509,55 @@ function buildPointsModal(sid) {
   return modal;
 }
 
+/**
+ * Modal shown when the reporter clicks "Submit Report".
+ * Collects optional army details for the reporter before saving the game.
+ */
+function buildSubmitModal(sid) {
+  const modal = new ModalBuilder()
+    .setCustomId(`rpt:sub_mdl:${sid}`)
+    .setTitle('Submit Report — Your Details (Optional)');
+
+  const armyNameInput = new TextInputBuilder()
+    .setCustomId('army_name')
+    .setLabel('Your army list name (optional)')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false)
+    .setMaxLength(100);
+
+  const urlInput = new TextInputBuilder()
+    .setCustomId('army_forge_url')
+    .setLabel('Army Forge share URL (optional)')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false)
+    .setMaxLength(500)
+    .setPlaceholder('https://army-forge.onepagerules.com/share/…');
+
+  const notesInput = new TextInputBuilder()
+    .setCustomId('player_notes')
+    .setLabel('Your notes (optional)')
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(false)
+    .setMaxLength(1000);
+
+  const feelingInput = new TextInputBuilder()
+    .setCustomId('game_feeling')
+    .setLabel('How was the game for you? (optional)')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false)
+    .setMaxLength(50)
+    .setPlaceholder('amazing / fun / ok / frustrating / lucky / intense');
+
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(armyNameInput),
+    new ActionRowBuilder().addComponents(urlInput),
+    new ActionRowBuilder().addComponents(notesInput),
+    new ActionRowBuilder().addComponents(feelingInput),
+  );
+
+  return modal;
+}
+
 /** Modal for adding post-game army details. */
 function buildAddDetailsModal(gameId, userId) {
   const modal = new ModalBuilder()
@@ -554,6 +603,7 @@ module.exports = {
   build2v2FactionStep,
   buildAddDetailsMessage,
   buildPointsModal,
+  buildSubmitModal,
   buildAddDetailsModal,
   getFactions,
   GAME_FEELINGS,

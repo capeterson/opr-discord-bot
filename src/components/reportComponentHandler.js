@@ -25,8 +25,13 @@ const {
   build2v2FactionStep,
   buildAddDetailsMessage,
   buildPointsModal,
+  buildSubmitModal,
   buildAddDetailsModal,
+  is1v1Ready,
+  is2v2Ready,
 } = require('./reportFormBuilder');
+
+const VALID_FEELING_VALUES = new Set(['amazing', 'fun', 'ok', 'frustrating', 'lucky', 'intense']);
 
 // ── Routing ───────────────────────────────────────────────────────────────────
 
@@ -86,6 +91,11 @@ async function handleReportModal(interaction) {
   if (id.startsWith('rpt:pts_mdl:')) {
     const sid = id.split(':')[2];
     return handlePointsModal(interaction, sid);
+  }
+
+  if (id.startsWith('rpt:sub_mdl:')) {
+    const sid = id.split(':')[2];
+    return handleSubmitModal(interaction, sid);
   }
 
   if (id.startsWith('report:dtl_mdl:')) {
@@ -231,7 +241,7 @@ async function handleBackButton(interaction, state, sid) {
 }
 
 async function handleSubmitButton(interaction, state, sid) {
-  const { guildId, gameType, gameSystem, armyPoints, winner, team1, team2, factions, advanceRotation, editGameId, allPlayers } = state;
+  const { gameType, armyPoints } = state;
 
   if (!armyPoints) {
     return interaction.reply({
@@ -240,6 +250,39 @@ async function handleSubmitButton(interaction, state, sid) {
     });
   }
 
+  const ready = gameType === '1v1' ? is1v1Ready(state) : is2v2Ready(state);
+  if (!ready) {
+    return interaction.reply({
+      content: '⚠️ Please complete all required fields before submitting.',
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
+  // Show the submit modal — reporter can optionally add their army details
+  // before the game is saved. The modal submit handler does the actual DB write.
+  return interaction.showModal(buildSubmitModal(sid));
+}
+
+async function handleSubmitModal(interaction, sid) {
+  const state = getSession(sid);
+  if (!state) {
+    return interaction.reply({
+      content: '⏱️ Form expired. Run `/opr report` again.',
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
+  const { guildId, gameType, gameSystem, armyPoints, winner, team1, team2, factions, advanceRotation, editGameId, allPlayers, userId } = state;
+
+  // Read optional reporter details from the modal fields
+  const armyName     = interaction.fields.getTextInputValue('army_name').trim()      || null;
+  const armyForgeUrl = interaction.fields.getTextInputValue('army_forge_url').trim() || null;
+  const playerNotes  = interaction.fields.getTextInputValue('player_notes').trim()   || null;
+  const rawFeeling   = interaction.fields.getTextInputValue('game_feeling').trim().toLowerCase() || null;
+  const gameFeeling  = rawFeeling && VALID_FEELING_VALUES.has(rawFeeling) ? rawFeeling : null;
+
+  // Defer-update the original ephemeral form message (modal was triggered from
+  // the submit button, so interaction.message is the form).
   await interaction.deferUpdate();
 
   // Build participant list
@@ -315,7 +358,7 @@ async function handleSubmitButton(interaction, state, sid) {
           game_system: gameSystem,
           game_type:   gameType,
           army_points: armyPoints,
-          reported_by: state.userId,
+          reported_by: userId,
           is_tie:      isTie,
         })
         .select()
@@ -331,6 +374,21 @@ async function handleSubmitButton(interaction, state, sid) {
         await supabase.from('games').delete().eq('id', game.id);
         throw partErr;
       }
+    }
+
+    // ── Save reporter's army details (if they're a participant) ────────────
+    const reporterIsParticipant = participants.some(p => p.discord_id === userId);
+    if (reporterIsParticipant && (armyName || armyForgeUrl || playerNotes || gameFeeling)) {
+      const updateData = {};
+      if (armyName)     updateData.army_name      = armyName;
+      if (armyForgeUrl) updateData.army_forge_url  = armyForgeUrl;
+      if (playerNotes)  updateData.player_notes    = playerNotes;
+      if (gameFeeling)  updateData.game_feeling     = gameFeeling;
+      await supabase
+        .from('game_participants')
+        .update(updateData)
+        .eq('game_id', game.id)
+        .eq('discord_id', userId);
     }
 
     // ── Advance rotation (2v2 only) ─────────────────────────────────────────
@@ -397,7 +455,6 @@ async function handlePointsModal(interaction, sid) {
 
   updateSession(sid, { armyPoints: points });
 
-  // Modal submit can't call update() — reply with the refreshed form instead.
   const newState = getSession(sid);
   let formMsg;
   switch (newState.step) {
@@ -408,7 +465,10 @@ async function handlePointsModal(interaction, sid) {
     default:              formMsg = buildSetupStep(newState, sid);
   }
 
-  return interaction.reply({ ...formMsg, flags: MessageFlags.Ephemeral });
+  // Modal was triggered from a message component (the pts button), so
+  // interaction.update() replaces the original ephemeral form in-place
+  // rather than creating a duplicate ephemeral message.
+  return interaction.update(formMsg);
 }
 
 // ── Post-game component handlers ──────────────────────────────────────────────
