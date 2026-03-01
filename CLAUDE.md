@@ -44,7 +44,7 @@ src/
 │   ├── stats.js              # /opr stats logic
 │   ├── players.js            # /opr players list/remove logic
 │   ├── schedule.js           # /opr schedule set/view/clear logic
-│   ├── rotation.js           # /opr rotation setup/view/reset logic
+│   ├── rotation.js           # /opr rotation setup/view/reset/skip/preview/reorder logic
 │   └── setup.js              # /opr setup channel/day/time/view/clear logic
 ├── handlers/
 │   └── interactionHandler.js # Routes interactions to command handlers; top-level error handling
@@ -53,7 +53,7 @@ src/
 ├── utils/
 │   ├── embeds.js             # Discord embed builders (report, stats, reminder, error, info)
 │   ├── stats.js              # computeStats(), topN(), winRate()
-│   └── rotation.js           # generateRotations(), getCurrentMatchup(), getNextMatchup()
+│   └── rotation.js           # generateRotations(), getOrderedMatchups(), getCurrentMatchup(), getNextMatchup(), getPreviewMatchups()
 └── scheduler/
     └── weeklyReminder.js     # Cron job: sends weekly game-night reminder to configured channels
 ```
@@ -83,7 +83,10 @@ All commands live under `/opr`. The full tree:
 ├── rotation
 │   ├── setup                               # Admin — generates matchup rotation
 │   ├── view                                # Everyone
-│   └── reset                               # Admin
+│   ├── preview                             # Everyone — next 4 matchups
+│   ├── reset                               # Admin
+│   ├── skip                                # Admin — advance index without a game report
+│   └── reorder <from> <to>                 # Admin — move a matchup to a new position
 └── setup
     ├── view                                # Everyone
     ├── channel <channel>                   # Admin
@@ -105,7 +108,7 @@ Admin commands require the "Manage Server" Discord permission.
 | `game_participants` | `game_id`, `discord_id`, `discord_name`, `team`, `faction`, `won` | Per-player game participation |
 | `game_schedule` | `guild_id`, `game_date`, `game_type`, `note` | Upcoming scheduled games |
 | `server_config` | `guild_id`, `reminder_channel_id`, `reminder_day`, `reminder_hour`, `last_reminder_date` | Per-guild bot settings |
-| `rotation_state` | `guild_id`, `player_discord_ids[]`, `current_index` | 2v2 rotation state |
+| `rotation_state` | `guild_id`, `player_discord_ids[]`, `current_index`, `matchup_order[]` | 2v2 rotation state |
 
 Guest players use a UUID (not a numeric Discord ID) as their `discord_id`.
 Discord users are displayed as `<@discord_id>` mentions; guests as bold names.
@@ -130,7 +133,7 @@ Discord users are displayed as `<@discord_id>` mentions; guests as bold names.
 - **Embeds:** All user-facing responses are Discord embeds built in `src/utils/embeds.js`. Use `buildErrorEmbed()` for errors and `buildInfoEmbed()` for neutral messages.
 - **Error handling:** Command handlers `try/catch` and return ephemeral error embeds. Uncaught errors are caught in `interactionHandler.js`.
 - **Ephemerals:** Error replies are ephemeral (only the invoking user sees them). Success replies are visible to the channel.
-- **2v2 rotation algorithm:** Fixes the first player on Team 1 and enumerates all C(n-1, n/2-1) partner combinations — guarantees no duplicate matchups. Logic is in `src/utils/rotation.js`.
+- **2v2 rotation algorithm:** Fixes the first player on Team 1 and enumerates all C(n-1, n/2-1) partner combinations — guarantees no duplicate matchups. Logic is in `src/utils/rotation.js`. A custom `matchup_order` integer array (stored in `rotation_state`) can override the natural order; `getOrderedMatchups()` applies it.
 - **Weekly reminder:** `weeklyReminder.js` runs a cron job at the top of every hour, checks `server_config` for matching day/hour, skips if `last_reminder_date` == today, then sends a stats summary embed.
 
 ---
