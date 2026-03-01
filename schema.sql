@@ -77,5 +77,8 @@ CREATE TABLE IF NOT EXISTS rotation_state (
   player_discord_ids  TEXT[]  NOT NULL DEFAULT '{}',
   -- Index into the generated rotation list (points to the NEXT matchup)
   current_index       INTEGER DEFAULT 0,
+  -- Optional custom matchup order: array of original matchup indices (e.g. [0, 2, 1]).
+  -- NULL means use the natural order from generateRotations().
+  matchup_order       INTEGER[],
   updated_at          TIMESTAMPTZ DEFAULT NOW()
 );

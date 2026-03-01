@@ -38,15 +38,27 @@ function generateRotations(players) {
 }
 
 /**
+ * Return the matchups in the custom order defined by `matchup_order`, or
+ * in the natural generated order if no custom order is set.
+ * @param {object} rotationState - Row from the rotation_state table
+ * @returns {[string[], string[]][]}
+ */
+function getOrderedMatchups(rotationState) {
+  const rotations = generateRotations(rotationState.player_discord_ids);
+  const { matchup_order } = rotationState;
+  if (!matchup_order || matchup_order.length === 0) return rotations;
+  return matchup_order.map(i => rotations[i]);
+}
+
+/**
  * Return the [team1, team2] matchup for the current rotation index.
  * @param {object} rotationState - Row from the rotation_state table
  * @returns {[string[], string[]] | null}
  */
 function getCurrentMatchup(rotationState) {
-  const { player_discord_ids, current_index } = rotationState;
-  const rotations = generateRotations(player_discord_ids);
-  if (rotations.length === 0) return null;
-  return rotations[current_index % rotations.length];
+  const ordered = getOrderedMatchups(rotationState);
+  if (ordered.length === 0) return null;
+  return ordered[rotationState.current_index % ordered.length];
 }
 
 /**
@@ -55,10 +67,28 @@ function getCurrentMatchup(rotationState) {
  * @returns {[string[], string[]] | null}
  */
 function getNextMatchup(rotationState) {
-  const { player_discord_ids, current_index } = rotationState;
-  const rotations = generateRotations(player_discord_ids);
-  if (rotations.length === 0) return null;
-  return rotations[(current_index + 1) % rotations.length];
+  const ordered = getOrderedMatchups(rotationState);
+  if (ordered.length === 0) return null;
+  return ordered[(rotationState.current_index + 1) % ordered.length];
+}
+
+/**
+ * Return up to `count` upcoming matchups starting from the current position.
+ * Each entry includes the matchup and its 1-based position number in the sequence.
+ * @param {object} rotationState - Row from the rotation_state table
+ * @param {number} count - Number of matchups to return (default 4)
+ * @returns {Array<{ matchup: [string[], string[]], position: number }>}
+ */
+function getPreviewMatchups(rotationState, count = 4) {
+  const ordered = getOrderedMatchups(rotationState);
+  if (ordered.length === 0) return [];
+  const total = ordered.length;
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    const pos = (rotationState.current_index + i) % total;
+    result.push({ matchup: ordered[pos], position: pos + 1 });
+  }
+  return result;
 }
 
 /**
@@ -82,4 +112,12 @@ function formatMatchup(team1Ids, team2Ids, nameMap = {}) {
   return `**Team 1:** ${t1}\n**Team 2:** ${t2}`;
 }
 
-module.exports = { generateRotations, getCurrentMatchup, getNextMatchup, totalMatchups, formatMatchup };
+module.exports = {
+  generateRotations,
+  getOrderedMatchups,
+  getCurrentMatchup,
+  getNextMatchup,
+  getPreviewMatchups,
+  totalMatchups,
+  formatMatchup,
+};

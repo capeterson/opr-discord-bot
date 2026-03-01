@@ -23,6 +23,7 @@ A Discord bot for tracking [One Page Rules](https://onepagerules.com/) game resu
   - [/opr schedule view](#opr-schedule-view)
   - [/opr players list](#opr-players-list)
   - [/opr rotation view](#opr-rotation-view)
+  - [/opr rotation preview](#opr-rotation-preview)
   - [/opr setup view](#opr-setup-view)
 - [Commands — Guild Admins](#commands--guild-admins)
   - [/opr setup channel](#opr-setup-channel)
@@ -34,6 +35,8 @@ A Discord bot for tracking [One Page Rules](https://onepagerules.com/) game resu
   - [/opr players remove](#opr-players-remove)
   - [/opr rotation setup](#opr-rotation-setup)
   - [/opr rotation reset](#opr-rotation-reset)
+  - [/opr rotation skip](#opr-rotation-skip)
+  - [/opr rotation reorder](#opr-rotation-reorder)
   - [/opr register (guest)](#opr-register-guest)
   - [/opr register (Discord user)](#opr-register-discord-user)
 - [Weekly Reminders](#weekly-reminders)
@@ -317,10 +320,26 @@ View the 2v2 team rotation — all matchups, the current one, and what's coming 
 
 **Displays:**
 - All players included in the rotation
-- A numbered list of all matchup pairings (current matchup highlighted)
+- A numbered list of all matchup pairings in the current order (current matchup highlighted)
 - The upcoming matchup for next week
 
 The rotation advances automatically each time a 2v2 game is reported.
+
+---
+
+### /opr rotation preview
+
+Preview the next 4 upcoming matchups from the current position.
+
+```
+/opr rotation preview
+```
+
+**Parameters:** None
+
+**Displays:** Four matchup cards showing the current matchup and the next three after it, each labeled with their rotation position number.
+
+Useful for planning ahead without needing to read the full rotation list.
 
 ---
 
@@ -547,6 +566,51 @@ Use this after all matchups in the current rotation have been played, or any tim
 
 ---
 
+### /opr rotation skip
+
+Skip forward one matchup without requiring a game to be reported.
+
+```
+/opr rotation skip
+```
+
+**Parameters:** None
+
+**Behavior:**
+- Advances `current_index` by one step, wrapping around if at the end of the rotation
+- Responds with the new current matchup
+- Does **not** record a game result — use `/opr report 2v2` for that
+
+Useful when a scheduled game night is cancelled or a matchup needs to be passed over.
+
+---
+
+### /opr rotation reorder
+
+Move a specific matchup to a different position in the rotation order. The change is persistent and affects all future matchups.
+
+```
+/opr rotation reorder from:<position> to:<position>
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `from` | Integer (≥1) | Yes | The current position number of the matchup to move (as shown in `/opr rotation view`) |
+| `to` | Integer (≥1) | Yes | The new position number to move it to |
+
+**Behavior:**
+- The matchup at position `from` is lifted out and inserted at position `to`; all other matchups shift accordingly
+- The currently active matchup remains the same — only its position number may change
+- The updated order is saved to the database and persists across bot restarts
+- Run `/opr rotation setup` to discard all custom ordering and regenerate the natural rotation
+
+**Example:** Move matchup 4 to position 2, pushing the existing matchups 2 and 3 down by one:
+```
+/opr rotation reorder from:4 to:2
+```
+
+---
+
 ### /opr register (guest)
 
 Register a non-Discord (guest) player by name. Useful for in-person players who don't have Discord.
@@ -656,8 +720,11 @@ The bot generates C(5, 2) = 10 unique matchups:
 | `/opr players list` | Everyone |
 | `/opr players remove` | Admins (Manage Server) |
 | `/opr rotation view` | Everyone |
+| `/opr rotation preview` | Everyone |
 | `/opr rotation setup` | Admins (Manage Server) |
 | `/opr rotation reset` | Admins (Manage Server) |
+| `/opr rotation skip` | Admins (Manage Server) |
+| `/opr rotation reorder` | Admins (Manage Server) |
 | `/opr setup view` | Everyone |
 | `/opr setup channel` | Admins (Manage Server) |
 | `/opr setup day` | Admins (Manage Server) |

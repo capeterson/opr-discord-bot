@@ -1,6 +1,13 @@
 const { PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const supabase = require('../database/supabase');
-const { generateRotations, getCurrentMatchup, getNextMatchup, formatMatchup } = require('../utils/rotation');
+const {
+  generateRotations,
+  getOrderedMatchups,
+  getCurrentMatchup,
+  getNextMatchup,
+  getPreviewMatchups,
+  formatMatchup,
+} = require('../utils/rotation');
 const { buildErrorEmbed, buildInfoEmbed, COLORS } = require('../utils/embeds');
 
 /** Build a name map for any guest (non-Discord) player IDs in the list. */
@@ -18,6 +25,21 @@ async function buildGuestNameMap(ids, guildId) {
 /** Format a player ID as a mention for Discord users, or bold name for guests. */
 function fmtPlayer(id, nameMap) {
   return /^\d+$/.test(id) ? `<@${id}>` : `**${nameMap[id] || id}**`;
+}
+
+/** Fetch and validate rotation state. Returns { rotState, error } where error is an embed or null. */
+async function fetchRotationState(guildId) {
+  const { data: rotState, error } = await supabase
+    .from('rotation_state')
+    .select('*')
+    .eq('guild_id', guildId)
+    .maybeSingle();
+
+  if (error) return { rotState: null, fetchError: 'Failed to fetch rotation.' };
+  if (!rotState || rotState.player_discord_ids.length < 4) {
+    return { rotState: null, fetchError: 'No rotation found. Run `/opr rotation setup` first.' };
+  }
+  return { rotState, fetchError: null };
 }
 
 module.exports = {
@@ -72,7 +94,13 @@ module.exports = {
       const { error: upsertErr } = await supabase
         .from('rotation_state')
         .upsert(
-          { guild_id: guildId, player_discord_ids: ids, current_index: 0, updated_at: new Date().toISOString() },
+          {
+            guild_id: guildId,
+            player_discord_ids: ids,
+            current_index: 0,
+            matchup_order: null,
+            updated_at: new Date().toISOString(),
+          },
           { onConflict: 'guild_id' },
         );
 
@@ -119,11 +147,11 @@ module.exports = {
         });
       }
 
-      const ids       = rotState.player_discord_ids;
-      const nameMap   = await buildGuestNameMap(ids, guildId);
-      const rotations = generateRotations(ids);
-      const total     = rotations.length;
-      const current   = rotState.current_index % total;
+      const ids     = rotState.player_discord_ids;
+      const nameMap = await buildGuestNameMap(ids, guildId);
+      const ordered = getOrderedMatchups(rotState);
+      const total   = ordered.length;
+      const current = rotState.current_index % total;
 
       const embed = new EmbedBuilder()
         .setTitle('⚔️ 2v2 Team Rotation')
@@ -133,8 +161,8 @@ module.exports = {
           { name: '👥 Registered Players', value: ids.map(id => fmtPlayer(id, nameMap)).join(', ') },
         );
 
-      // Show all matchups, highlighting the current one
-      const lines = rotations.map(([t1, t2], i) => {
+      // Show all matchups in the (possibly custom) order, highlighting current
+      const lines = ordered.map(([t1, t2], i) => {
         const t1str = t1.map(id => fmtPlayer(id, nameMap)).join(' & ');
         const t2str = t2.map(id => fmtPlayer(id, nameMap)).join(' & ');
         const arrow = i === current ? ' ← **current**' : '';
@@ -169,14 +197,9 @@ module.exports = {
 
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-      const { data: rotState, error: fetchErr } = await supabase
-        .from('rotation_state')
-        .select('*')
-        .eq('guild_id', guildId)
-        .maybeSingle();
-
-      if (fetchErr || !rotState) {
-        return interaction.editReply({ embeds: [buildErrorEmbed('No rotation found. Run `/opr rotation setup` first.')] });
+      const { rotState, fetchError } = await fetchRotationState(guildId);
+      if (fetchError) {
+        return interaction.editReply({ embeds: [buildErrorEmbed(fetchError)] });
       }
 
       const { error: updateErr } = await supabase
@@ -188,18 +211,198 @@ module.exports = {
         return interaction.editReply({ embeds: [buildErrorEmbed('Failed to reset rotation.')] });
       }
 
-      const ids      = rotState.player_discord_ids;
-      const nameMap  = await buildGuestNameMap(ids, guildId);
-      const rotations = generateRotations(ids);
-      const [t1, t2]  = rotations[0];
+      const ids     = rotState.player_discord_ids;
+      const nameMap = await buildGuestNameMap(ids, guildId);
+      const ordered = getOrderedMatchups(rotState);
+      const [t1, t2] = ordered[0];
 
       return interaction.editReply({
         embeds: [buildInfoEmbed(
           '🔄 Rotation Reset',
-          `Rotation has been reset to matchup 1 of ${rotations.length}.\n\n${formatMatchup(t1, t2, nameMap)}`,
+          `Rotation has been reset to matchup 1 of ${ordered.length}.\n\n${formatMatchup(t1, t2, nameMap)}`,
           COLORS.warning,
         )],
       });
+    }
+
+    // ── skip ───────────────────────────────────────────────────────────────
+    if (sub === 'skip') {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
+        return interaction.reply({
+          embeds: [buildErrorEmbed('You need the **Manage Server** permission to skip the rotation.')],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+      const { rotState, fetchError } = await fetchRotationState(guildId);
+      if (fetchError) {
+        return interaction.editReply({ embeds: [buildErrorEmbed(fetchError)] });
+      }
+
+      const ids     = rotState.player_discord_ids;
+      const nameMap = await buildGuestNameMap(ids, guildId);
+      const ordered = getOrderedMatchups(rotState);
+      const total   = ordered.length;
+      const newIndex = (rotState.current_index + 1) % total;
+
+      const { error: updateErr } = await supabase
+        .from('rotation_state')
+        .update({ current_index: newIndex, updated_at: new Date().toISOString() })
+        .eq('guild_id', guildId);
+
+      if (updateErr) {
+        return interaction.editReply({ embeds: [buildErrorEmbed('Failed to skip rotation.')] });
+      }
+
+      const [t1, t2] = ordered[newIndex];
+
+      return interaction.editReply({
+        embeds: [buildInfoEmbed(
+          '⏭️ Rotation Skipped',
+          `Skipped to matchup **${newIndex + 1}** of ${total}.\n\n${formatMatchup(t1, t2, nameMap)}`,
+          COLORS.warning,
+        )],
+      });
+    }
+
+    // ── preview ────────────────────────────────────────────────────────────
+    if (sub === 'preview') {
+      await interaction.deferReply();
+
+      const { data: rotState, error } = await supabase
+        .from('rotation_state')
+        .select('*')
+        .eq('guild_id', guildId)
+        .maybeSingle();
+
+      if (error) {
+        return interaction.editReply({ embeds: [buildErrorEmbed('Failed to fetch rotation.')] });
+      }
+
+      if (!rotState || rotState.player_discord_ids.length < 4) {
+        return interaction.editReply({
+          embeds: [buildInfoEmbed(
+            '⚔️ No Rotation Set Up',
+            'No 2v2 rotation is configured yet.\nAn admin can run `/opr rotation setup` after all players have `/opr register`\'d.',
+          )],
+        });
+      }
+
+      const ids     = rotState.player_discord_ids;
+      const nameMap = await buildGuestNameMap(ids, guildId);
+      const ordered = getOrderedMatchups(rotState);
+      const total   = ordered.length;
+      const preview = getPreviewMatchups(rotState, Math.min(4, total));
+
+      const embed = new EmbedBuilder()
+        .setTitle('🔮 Upcoming Matchup Preview')
+        .setColor(COLORS.info)
+        .setTimestamp();
+
+      const labels = ['⚔️ Current Matchup', '⏭️ Next Matchup', '⏭️ Matchup +2', '⏭️ Matchup +3'];
+      preview.forEach(({ matchup, position }, i) => {
+        const [t1, t2] = matchup;
+        embed.addFields({
+          name: `${labels[i]} (Rotation ${position})`,
+          value: formatMatchup(t1, t2, nameMap),
+        });
+      });
+
+      embed.setFooter({ text: `${total} total matchups in rotation` });
+
+      return interaction.editReply({ embeds: [embed] });
+    }
+
+    // ── reorder ────────────────────────────────────────────────────────────
+    if (sub === 'reorder') {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
+        return interaction.reply({
+          embeds: [buildErrorEmbed('You need the **Manage Server** permission to reorder the rotation.')],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+      const fromPos = interaction.options.getInteger('from'); // 1-indexed
+      const toPos   = interaction.options.getInteger('to');   // 1-indexed
+
+      const { rotState, fetchError } = await fetchRotationState(guildId);
+      if (fetchError) {
+        return interaction.editReply({ embeds: [buildErrorEmbed(fetchError)] });
+      }
+
+      const ids     = rotState.player_discord_ids;
+      const nameMap = await buildGuestNameMap(ids, guildId);
+      const baseRotations = generateRotations(ids);
+      const total = baseRotations.length;
+
+      if (fromPos < 1 || fromPos > total) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed(`**from** must be between 1 and ${total}.`)],
+        });
+      }
+      if (toPos < 1 || toPos > total) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed(`**to** must be between 1 and ${total}.`)],
+        });
+      }
+      if (fromPos === toPos) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed('**from** and **to** cannot be the same position.')],
+        });
+      }
+
+      // Build the current order array (indices into baseRotations)
+      const order = rotState.matchup_order && rotState.matchup_order.length === total
+        ? [...rotState.matchup_order]
+        : Array.from({ length: total }, (_, i) => i);
+
+      // Track which base-rotation index the current matchup corresponds to
+      const currentBaseIdx = order[rotState.current_index % total];
+
+      // Move the item from fromPos-1 to toPos-1
+      const [moved] = order.splice(fromPos - 1, 1);
+      order.splice(toPos - 1, 0, moved);
+
+      // Update current_index so the same matchup remains "current"
+      const newCurrentIndex = order.indexOf(currentBaseIdx);
+
+      const { error: updateErr } = await supabase
+        .from('rotation_state')
+        .update({
+          matchup_order: order,
+          current_index: newCurrentIndex,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('guild_id', guildId);
+
+      if (updateErr) {
+        return interaction.editReply({ embeds: [buildErrorEmbed('Failed to reorder rotation.')] });
+      }
+
+      // Build a preview of the updated sequence
+      const lines = order.map((baseIdx, i) => {
+        const [t1, t2] = baseRotations[baseIdx];
+        const t1str = t1.map(id => fmtPlayer(id, nameMap)).join(' & ');
+        const t2str = t2.map(id => fmtPlayer(id, nameMap)).join(' & ');
+        const arrow = i === newCurrentIndex ? ' ← **current**' : '';
+        return `**${i + 1}.** ${t1str} vs ${t2str}${arrow}`;
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle('🔀 Rotation Reordered')
+        .setColor(COLORS.success)
+        .setTimestamp()
+        .addFields({
+          name: `🔄 Updated Matchup Order (${total} total)`,
+          value: lines.join('\n'),
+        })
+        .setFooter({ text: 'This order will be followed for all future matchups' });
+
+      return interaction.editReply({ embeds: [embed] });
     }
   },
 };

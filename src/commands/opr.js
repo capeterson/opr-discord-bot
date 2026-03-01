@@ -140,6 +140,30 @@ module.exports = {
         .setName('reset')
         .setDescription('Reset the rotation back to the first matchup (admin only)')
       )
+      .addSubcommand(sub => sub
+        .setName('skip')
+        .setDescription('Skip forward one matchup without reporting a game (admin only)')
+      )
+      .addSubcommand(sub => sub
+        .setName('preview')
+        .setDescription('Preview the next 4 upcoming matchups')
+      )
+      .addSubcommand(sub => sub
+        .setName('reorder')
+        .setDescription('Move a matchup to a different position in the rotation (admin only)')
+        .addIntegerOption(o => o
+          .setName('from')
+          .setDescription('Current position number of the matchup to move (from /opr rotation view)')
+          .setRequired(true)
+          .setMinValue(1)
+        )
+        .addIntegerOption(o => o
+          .setName('to')
+          .setDescription('New position number to move it to')
+          .setRequired(true)
+          .setMinValue(1)
+        )
+      )
     )
 
     // ── setup ───────────────────────────────────────────────────────────────
