@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS games (
   game_type   TEXT        NOT NULL CHECK (game_type IN ('1v1', '2v2')),
   army_points INTEGER     NOT NULL,   -- points per player
   reported_by TEXT        NOT NULL,   -- discord_id of the reporter
+  is_tie      BOOLEAN     DEFAULT FALSE,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -28,18 +29,30 @@ CREATE INDEX IF NOT EXISTS games_game_date_idx ON games(game_date);
 
 -- Participants in each game
 CREATE TABLE IF NOT EXISTS game_participants (
-  id           UUID    DEFAULT gen_random_uuid() PRIMARY KEY,
-  game_id      UUID    REFERENCES games(id) ON DELETE CASCADE NOT NULL,
-  discord_id   TEXT    NOT NULL,
-  discord_name TEXT    NOT NULL,
-  team         INTEGER NOT NULL CHECK (team IN (1, 2)),
-  faction      TEXT    NOT NULL,
-  won          BOOLEAN NOT NULL,
-  created_at   TIMESTAMPTZ DEFAULT NOW()
+  id            UUID    DEFAULT gen_random_uuid() PRIMARY KEY,
+  game_id       UUID    REFERENCES games(id) ON DELETE CASCADE NOT NULL,
+  discord_id    TEXT    NOT NULL,
+  discord_name  TEXT    NOT NULL,
+  team          INTEGER NOT NULL CHECK (team IN (1, 2)),
+  faction       TEXT,                   -- nullable; captured in form or via "Add My Details"
+  won           BOOLEAN NOT NULL,
+  army_name     TEXT,                   -- filled in by player via "Add My Details"
+  army_forge_url TEXT,                  -- OPR Army Forge share URL
+  player_notes  TEXT,
+  game_feeling  TEXT,                   -- emoji identifier (e.g. 'amazing', 'fun')
+  created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS game_participants_game_id_idx ON game_participants(game_id);
 CREATE INDEX IF NOT EXISTS game_participants_discord_id_idx ON game_participants(discord_id);
+
+-- ── Migration: component-based report form (run once on existing databases) ──
+-- ALTER TABLE game_participants ALTER COLUMN faction DROP NOT NULL;
+-- ALTER TABLE game_participants ADD COLUMN IF NOT EXISTS army_name      TEXT;
+-- ALTER TABLE game_participants ADD COLUMN IF NOT EXISTS army_forge_url TEXT;
+-- ALTER TABLE game_participants ADD COLUMN IF NOT EXISTS player_notes   TEXT;
+-- ALTER TABLE game_participants ADD COLUMN IF NOT EXISTS game_feeling   TEXT;
+-- ALTER TABLE games ADD COLUMN IF NOT EXISTS is_tie BOOLEAN DEFAULT FALSE;
 
 -- Upcoming game schedule
 CREATE TABLE IF NOT EXISTS game_schedule (

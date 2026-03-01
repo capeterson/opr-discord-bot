@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { computeStats, topN, winRate } = require('./stats');
 const { getCurrentMatchup, formatMatchup, totalMatchups } = require('./rotation');
 
@@ -32,49 +32,99 @@ function formatRelative(date) {
   return `<t:${ts}:R>`;
 }
 
-/** Build the success embed shown after a game is reported. */
-function buildReportEmbed(game, participants, nextMatchup) {
-  const winners = participants.filter(p => p.won);
-  const losers  = participants.filter(p => !p.won);
-  const system  = GAME_SYSTEMS[game.game_system] || game.game_system;
+/**
+ * Format a single participant for display in the result embed.
+ * Discord users are shown as mentions; guests as bold names.
+ */
+function formatParticipant(p) {
+  const isDiscord = /^\d+$/.test(p.discord_id);
+  const name      = isDiscord ? `<@${p.discord_id}>` : `**${p.discord_name}**`;
+  const fac       = p.faction ? ` — ${p.faction}` : '';
+  return `${name}${fac}`;
+}
+
+/**
+ * Build the success embed shown after a game is reported.
+ * @param {object}   game         - Row from the games table (may include is_tie)
+ * @param {object[]} participants - Rows from game_participants
+ * @param {Array|null} nextMatchup - [team1Ids, team2Ids] or null
+ * @param {object}   [nameMap]    - Map of guest discord_id → display name for nextMatchup
+ */
+function buildReportEmbed(game, participants, nextMatchup, nameMap = {}) {
+  const isTie  = game.is_tie === true;
+  const system = GAME_SYSTEMS[game.game_system] || game.game_system;
 
   const embed = new EmbedBuilder()
-    .setTitle('✅ Game Result Recorded')
-    .setColor(COLORS.success)
+    .setTitle(isTie ? '🤝 Game Result — Tie' : '✅ Game Result Recorded')
+    .setColor(isTie ? COLORS.warning : COLORS.success)
     .setTimestamp();
 
   embed.addFields(
-    { name: 'System', value: system, inline: true },
-    { name: 'Format', value: game.game_type,  inline: true },
-    { name: 'Points per player', value: game.army_points.toString(), inline: true },
+    { name: 'System',          value: system,                          inline: true },
+    { name: 'Format',          value: game.game_type,                  inline: true },
+    { name: 'Points / player', value: (game.army_points || 0).toString(), inline: true },
   );
 
-  if (game.game_type === '1v1') {
-    const w = winners[0];
-    const l = losers[0];
-    embed.addFields(
-      { name: '🏆 Winner', value: `<@${w.discord_id}> — ${w.faction}` },
-      { name: '💀 Loser',  value: `<@${l.discord_id}> — ${l.faction}` },
-    );
+  if (isTie) {
+    const team1 = participants.filter(p => p.team === 1);
+    const team2 = participants.filter(p => p.team === 2);
+    if (game.game_type === '1v1') {
+      embed.addFields({
+        name:  '🤝 Tie',
+        value: [...team1, ...team2].map(formatParticipant).join('\n'),
+      });
+    } else {
+      embed.addFields(
+        { name: '🤝 Tie — Team 1', value: team1.map(formatParticipant).join('\n') },
+        { name: '🤝 Tie — Team 2', value: team2.map(formatParticipant).join('\n') },
+      );
+    }
   } else {
-    const wLine = winners.map(p => `<@${p.discord_id}> (${p.faction})`).join('\n');
-    const lLine = losers.map(p =>  `<@${p.discord_id}> (${p.faction})`).join('\n');
-    embed.addFields(
-      { name: '🏆 Winning Team', value: wLine },
-      { name: '💀 Losing Team',  value: lLine },
-    );
+    const winners = participants.filter(p => p.won);
+    const losers  = participants.filter(p => !p.won);
+
+    if (game.game_type === '1v1') {
+      const w = winners[0];
+      const l = losers[0];
+      if (w) embed.addFields({ name: '🏆 Winner', value: formatParticipant(w) });
+      if (l) embed.addFields({ name: '💀 Loser',  value: formatParticipant(l) });
+    } else {
+      embed.addFields(
+        { name: '🏆 Winning Team', value: winners.map(formatParticipant).join('\n') || '—' },
+        { name: '💀 Losing Team',  value: losers.map(formatParticipant).join('\n')  || '—' },
+      );
+    }
   }
 
   if (nextMatchup) {
     const [t1, t2] = nextMatchup;
     embed.addFields({
-      name: '⚔️ Next Week\'s Matchup',
-      value: formatMatchup(t1, t2),
+      name:  "⚔️ Next Week's Matchup",
+      value: formatMatchup(t1, t2, nameMap),
     });
   }
 
-  embed.setFooter({ text: 'Use /stats to view full statistics' });
+  embed.setFooter({ text: 'Use /opr stats to view full statistics • Click "Add My Details" to add army info' });
   return embed;
+}
+
+/**
+ * Build the persistent action row attached to every public game result embed.
+ * @param {string} gameId - UUID of the game
+ * @returns {ActionRowBuilder}
+ */
+function buildReportActionRow(gameId) {
+  const addBtn = new ButtonBuilder()
+    .setCustomId(`report:add:${gameId}`)
+    .setLabel('📝 Add My Details')
+    .setStyle(ButtonStyle.Primary);
+
+  const editBtn = new ButtonBuilder()
+    .setCustomId(`report:edit:${gameId}`)
+    .setLabel('🔧 Edit Report')
+    .setStyle(ButtonStyle.Secondary);
+
+  return new ActionRowBuilder().addComponents(addBtn, editBtn);
 }
 
 /** Build the full statistics embed. */
@@ -296,6 +346,7 @@ module.exports = {
   COLORS,
   GAME_SYSTEMS,
   buildReportEmbed,
+  buildReportActionRow,
   buildStatsEmbed,
   buildWeeklyReminderEmbed,
   buildErrorEmbed,
