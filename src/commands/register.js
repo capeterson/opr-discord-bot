@@ -5,10 +5,66 @@ const { buildInfoEmbed, buildErrorEmbed, COLORS } = require('../utils/embeds');
 
 module.exports = {
   async execute(interaction) {
-    const guildId   = interaction.guildId;
-    const guestName = interaction.options.getString('name');
+    const guildId      = interaction.guildId;
+    const mentionedUser = interaction.options.getUser('user');
+    const guestName    = interaction.options.getString('name');
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+    // ── Admin: register another Discord member by mention ───────────────────
+    if (mentionedUser) {
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed('You need the **Manage Server** permission to register other players.')],
+        });
+      }
+
+      const targetId   = mentionedUser.id;
+      const targetName = mentionedUser.displayName || mentionedUser.username;
+
+      const { data: existing, error: fetchErr } = await supabase
+        .from('players')
+        .select('id, discord_name')
+        .eq('discord_id', targetId)
+        .eq('guild_id', guildId)
+        .maybeSingle();
+
+      if (fetchErr) {
+        return interaction.editReply({ embeds: [buildErrorEmbed('Database error. Please try again.')] });
+      }
+
+      if (existing) {
+        if (existing.discord_name !== targetName) {
+          await supabase
+            .from('players')
+            .update({ discord_name: targetName })
+            .eq('id', existing.id);
+        }
+        return interaction.editReply({
+          embeds: [buildInfoEmbed(
+            '✅ Already Registered',
+            `<@${targetId}> is already registered as **${targetName}**. Their display name has been refreshed.`,
+            COLORS.success,
+          )],
+        });
+      }
+
+      const { error: insertErr } = await supabase
+        .from('players')
+        .insert({ discord_id: targetId, guild_id: guildId, discord_name: targetName });
+
+      if (insertErr) {
+        return interaction.editReply({ embeds: [buildErrorEmbed('Failed to register player. Please try again.')] });
+      }
+
+      return interaction.editReply({
+        embeds: [buildInfoEmbed(
+          '✅ Player Registered',
+          `<@${targetId}> (**${targetName}**) has been added to the player roster.\n\nRun \`/opr rotation setup\` to rebuild the 2v2 rotation.`,
+          COLORS.success,
+        )],
+      });
+    }
 
     // ── Admin: register a non-Discord guest player ──────────────────────────
     if (guestName) {

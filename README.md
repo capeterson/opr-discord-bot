@@ -28,12 +28,14 @@ A Discord bot for tracking [One Page Rules](https://onepagerules.com/) game resu
   - [/opr setup channel](#opr-setup-channel)
   - [/opr setup day](#opr-setup-day)
   - [/opr setup time](#opr-setup-time)
+  - [/opr setup clear](#opr-setup-clear)
   - [/opr schedule set](#opr-schedule-set)
   - [/opr schedule clear](#opr-schedule-clear)
   - [/opr players remove](#opr-players-remove)
   - [/opr rotation setup](#opr-rotation-setup)
   - [/opr rotation reset](#opr-rotation-reset)
   - [/opr register (guest)](#opr-register-guest)
+  - [/opr register (Discord user)](#opr-register-discord-user)
 - [Weekly Reminders](#weekly-reminders)
 - [2v2 Rotation System](#2v2-rotation-system)
 - [Permissions Reference](#permissions-reference)
@@ -182,6 +184,8 @@ Register yourself as a player for game tracking and 2v2 rotation.
 
 **Example output:**
 > ✅ You've been registered as **PlayerName**!
+
+> **Admins:** See [/opr register (guest)](#opr-register-guest) and [/opr register (Discord user)](#opr-register-discord-user) to register other players.
 
 ---
 
@@ -403,6 +407,29 @@ This sets reminders to go out at 18:00 UTC (6:00 PM UTC). Adjust for your local 
 
 ---
 
+### /opr setup clear
+
+Remove all reminder settings associated with a specific channel. Only clears settings if the channel provided is the currently configured reminder channel.
+
+```
+/opr setup clear channel:<#channel>
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `channel` | Channel mention | Yes | The channel whose reminders should be removed |
+
+**Behavior:**
+- If the provided channel matches the server's configured reminder channel, all reminder settings (`channel`, `day`, `time`) are cleared and weekly reminders stop
+- If the provided channel is not the current reminder channel, an error is returned — use `/opr setup view` to check which channel is configured
+
+**Example:**
+```
+/opr setup clear channel:#opr-gaming
+```
+
+---
+
 ### /opr schedule set
 
 Schedule an upcoming game session.
@@ -541,6 +568,32 @@ Guest players can participate in games and the 2v2 rotation just like Discord us
 
 ---
 
+### /opr register (Discord user)
+
+Register another Discord server member on their behalf. Useful when a player hasn't registered themselves yet.
+
+```
+/opr register user:<@user>
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `user` | User mention | Yes | The Discord member to register |
+
+**Behavior:**
+- Registers the mentioned user using their real Discord ID and current display name
+- If they are already registered, refreshes their display name to match their current Discord name
+- The registered user can immediately participate in games and the 2v2 rotation
+
+**Example:**
+```
+/opr register user:@Alice
+```
+
+> **Note:** Unlike guest registration, this links the player to an actual Discord account so they can self-report games and receive mentions in reminders.
+
+---
+
 ## Weekly Reminders
 
 When configured, the bot sends an automated weekly reminder to a designated channel. The reminder includes:
@@ -593,6 +646,7 @@ The bot generates C(5, 2) = 10 unique matchups:
 |---------|-------------|
 | `/opr register` (self) | Everyone |
 | `/opr register name:` (guest) | Admins (Manage Server) |
+| `/opr register user:` (Discord user) | Admins (Manage Server) |
 | `/opr report 1v1` | Everyone |
 | `/opr report 2v2` | Everyone |
 | `/opr stats` | Everyone |
@@ -608,6 +662,7 @@ The bot generates C(5, 2) = 10 unique matchups:
 | `/opr setup channel` | Admins (Manage Server) |
 | `/opr setup day` | Admins (Manage Server) |
 | `/opr setup time` | Admins (Manage Server) |
+| `/opr setup clear` | Admins (Manage Server) |
 
 ---
 

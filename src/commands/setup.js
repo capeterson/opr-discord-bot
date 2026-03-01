@@ -133,5 +133,44 @@ module.exports = {
         )],
       });
     }
+
+    // ── clear ───────────────────────────────────────────────────────────────
+    if (sub === 'clear') {
+      const channel = interaction.options.getChannel('channel');
+
+      const { data: config } = await supabase
+        .from('server_config')
+        .select('reminder_channel_id')
+        .eq('guild_id', guildId)
+        .maybeSingle();
+
+      if (!config || config.reminder_channel_id !== channel.id) {
+        return interaction.editReply({
+          embeds: [buildErrorEmbed(`Reminders are not configured for <#${channel.id}>. Use \`/opr setup view\` to see the current reminder channel.`)],
+        });
+      }
+
+      const { error } = await supabase
+        .from('server_config')
+        .update({
+          reminder_channel_id: null,
+          reminder_day: null,
+          reminder_hour: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('guild_id', guildId);
+
+      if (error) {
+        return interaction.editReply({ embeds: [buildErrorEmbed('Failed to clear reminder settings.')] });
+      }
+
+      return interaction.editReply({
+        embeds: [buildInfoEmbed(
+          '✅ Reminder Settings Cleared',
+          `Reminders for <#${channel.id}> have been removed. Weekly reminders will no longer be sent for this server.`,
+          COLORS.success,
+        )],
+      });
+    }
   },
 };
